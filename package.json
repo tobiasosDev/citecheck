@@ -1,0 +1,60 @@
+{
+  "name": "citecheck",
+  "version": "1.0.0",
+  "description": "Check whether the references in your .bib / .ris / CSL-JSON bibliography actually exist and haven't been retracted, and see which sources are in DOAJ-listed open-access journals — using Crossref, OpenAlex and DOAJ. No API key, no signup.",
+  "type": "module",
+  "bin": {
+    "citecheck": "dist/cli.js"
+  },
+  "exports": {
+    ".": "./dist/index.js"
+  },
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "tsc",
+    "prepare": "tsc",
+    "smoke": "node dist/cli.js --version && node dist/cli.js --help > /dev/null",
+    "test": "bun test"
+  },
+  "keywords": [
+    "zotero",
+    "bibtex",
+    "ris",
+    "csl-json",
+    "citation",
+    "references",
+    "bibliography",
+    "crossref",
+    "openalex",
+    "doaj",
+    "retraction",
+    "open-access",
+    "thesis",
+    "academic"
+  ],
+  "license": "MIT",
+  "author": "Tobias Lüscher",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tobiasosDev/citecheck.git"
+  },
+  "homepage": "https://github.com/tobiasosDev/citecheck#readme",
+  "bugs": {
+    "url": "https://github.com/tobiasosDev/citecheck/issues"
+  },
+  "dependencies": {
+    "@retorquere/bibtex-parser": "^10.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.6.0"
+  }
+}

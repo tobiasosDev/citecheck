@@ -1,0 +1,44 @@
+% A tiny mixed bibliography to try citecheck on:
+%   - watson1953     a real, well-cited paper      -> should verify
+%   - ioannidis2005  an open-access (DOAJ) journal  -> verified + DOAJ note
+%   - wakefield1998  a famously retracted paper     -> should flag RETRACTED
+%   - fabricated2099 a made-up reference            -> should be not found
+
+@article{watson1953,
+  title   = {Molecular Structure of Nucleic Acids: A Structure for Deoxyribose Nucleic Acid},
+  author  = {Watson, J. D. and Crick, F. H. C.},
+  journal = {Nature},
+  year    = {1953},
+  volume  = {171},
+  pages   = {737--738},
+  doi     = {10.1038/171737a0}
+}
+
+@article{ioannidis2005,
+  title   = {Why Most Published Research Findings Are False},
+  author  = {Ioannidis, John P. A.},
+  journal = {PLoS Medicine},
+  year    = {2005},
+  volume  = {2},
+  number  = {8},
+  pages   = {e124},
+  doi     = {10.1371/journal.pmed.0020124}
+}
+
+@article{wakefield1998,
+  title   = {Ileal-lymphoid-nodular hyperplasia, non-specific colitis, and pervasive developmental disorder in children},
+  author  = {Wakefield, A. J. and Murch, S. H. and Anthony, A.},
+  journal = {The Lancet},
+  year    = {1998},
+  volume  = {351},
+  pages   = {637--641},
+  doi     = {10.1016/S0140-6736(97)11096-0}
+}
+
+@article{fabricated2099,
+  title   = {Quantum Entanglement of Bibliographic Phantoms in Non-Existent Journals},
+  author  = {Nobody, Alice and Phantom, Bob},
+  journal = {Journal of Imaginary Studies},
+  year    = {2099},
+  doi     = {10.5555/this.doi.does.not.exist.000}
+}
