@@ -1,0 +1,50 @@
+src/quick-check.ts
+  s_63a05060da7a43::t_2d864ef2773058 6-11
+  s_63a05060da7a43::t_4a6a178fe742e1 93-127
+README.md
+  s_63a05060da7a43::t_765c85a457faa3 4
+  s_63a05060da7a43::t_7c279d2a4b4b1a 55-58
+  s_63a05060da7a43::t_9f4510b5315bce 107-114
+  s_63a05060da7a43::t_a68b3658c668be 168
+  s_63a05060da7a43::t_fddafe165197d5 11-34
+  s_63a05060da7a43::t_d1ea59a7886e19 35-36
+examples/sample.bib
+  s_63a05060da7a43::t_f0c989cd672d25 17-27
+  s_63a05060da7a43::t_1d0b77b9635f0b 2-5
+src/openalex.ts
+  s_63a05060da7a43::t_924efc8aaf7634 29-31
+  s_63a05060da7a43::t_dc32e57936dbe5 1
+src/http.ts
+  s_63a05060da7a43::t_9556ae52206c17 18-61
+src/doaj.ts
+  s_63a05060da7a43::t_62fbca4994ced1 1
+  s_63a05060da7a43::t_fc5ff0fd5ba881 38-40
+package.json
+  s_63a05060da7a43::t_979a911356e0c6 39
+  s_63a05060da7a43::t_e3a5b7929c159b 4
+src/cli.ts
+  s_63a05060da7a43::t_1faed2e866467c 44-45
+  s_63a05060da7a43::t_fef9df0d9d9a60 22-23
+  s_63a05060da7a43::t_7f66865227e6e8 168-197
+  s_63a05060da7a43::t_db18747d2f8bdc 110
+  s_63a05060da7a43::t_8914fc39be6e81 122-126
+src/crossref.ts
+  s_63a05060da7a43::t_df466f0fec0cff 1
+  s_63a05060da7a43::t_1278f690d6ff83 41-71
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "070a751307d2a5608e3dafab04f07b5d6a2e70eb",
+  "prompts": {},
+  "sessions": {
+    "s_63a05060da7a43": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "562c9cc2-71f7-4946-87ab-5c4364fcb4b8",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": null
+    }
+  }
+}
