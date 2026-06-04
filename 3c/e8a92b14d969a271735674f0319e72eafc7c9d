@@ -1,0 +1,28 @@
+src/quick-check.ts
+  s_e6decd44838371::t_89080c8a704cb2 55-60
+docs/superpowers/plans/2026-06-04-document-upload.md
+  s_e6decd44838371::t_76a087039d342a 1319
+test/quick-check.test.ts
+  s_e6decd44838371::t_19262e904173d5 20
+  s_e6decd44838371::t_d9e6d6a528703b 15-19,21-27
+test/locate-section.test.ts
+  s_e6decd44838371::t_8efe2d11045360 78-84
+src/cli.ts
+  s_e6decd44838371::t_1e5e717faf8f00 44
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "3ce8a92b14d969a271735674f0319e72eafc7c9d",
+  "prompts": {},
+  "sessions": {
+    "s_e6decd44838371": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fec64bcb-6419-43a4-9a9f-2d3b982ddc4b",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Tobias Lüscher <17859972+tobiasosDev@users.noreply.github.com>"
+    }
+  }
+}
