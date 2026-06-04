@@ -56,17 +56,23 @@ test("hanging-indent APA: indented continuations fold into the entry above", () 
   expect(refs[1]).toContain("Deep learning for citation verification");
 });
 
-test("un-numbered wrap: a first line ending mid-clause folds the next line in", () => {
-  // No indentation, but the first physical line does not close on terminal
-  // punctuation, so the following line is a continuation, not a new entry.
+test("un-numbered, indent-only: a non-terminal previous line does NOT swallow the next entry (I1)", () => {
+  // The previous "previous line did not end on terminal punctuation => fold"
+  // heuristic was dropped. It mis-merged a real reference whose previous entry
+  // ended on a non-terminal char (e.g. a bare page count "1-10") into the
+  // following entry, producing a glued string reported as fabricated — a damaging
+  // false alarm. With indent-only segmentation, ref 1 ending on a non-terminal
+  // page count must NOT swallow the next (real) reference: they stay separate.
   const block = [
-    "Jones, P. (2018). The very long title that spills onto the next",
-    "line. Nature, 555, 1-10.",
+    "Jones, P. (2018). A complete work. Nature, 555, 1-10",
     "Brown, T. (2021). Another work. Science, 99, 22-30.",
+    "García, M. (2019). A third work. Cell, 12, 5-9.",
   ].join("\n");
   const refs = segmentReferences(block);
-  expect(refs.length).toBe(2);
-  expect(refs[0]).toBe("Jones, P. (2018). The very long title that spills onto the next line. Nature, 555, 1-10.");
+  expect(refs.length).toBe(3);
+  expect(refs[0]).toBe("Jones, P. (2018). A complete work. Nature, 555, 1-10");
+  expect(refs[1]).toBe("Brown, T. (2021). Another work. Science, 99, 22-30.");
+  expect(refs[2]).toContain("A third work");
 });
 
 test("numbered list: prose before the first marker is discarded, not made an entry", () => {

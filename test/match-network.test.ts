@@ -133,6 +133,26 @@ test("doaj_listed override fires when OpenAlex reports is_in_doaj even if ISSN l
   expect(r.journalStatus).toBe("doaj_listed");
 });
 
+test("anti-inversion: a generic short-title candidate must NOT verify a fabrication (C1)", async () => {
+  // Crossref returns its abundant generic "Case report" notice as the nearest
+  // guess for a fabricated reference that merely contains the words "case report"
+  // plus a colliding surname + year. titleContainment saturates to 1.0 on those 2
+  // generic tokens — but the matched-token floor (3) blocks the title-only verify
+  // path, so the verdict must NOT be "verified". With containment 1.0 it lands at
+  // partial_match (never not_found), and the fabrication is not headlined as a
+  // confirmed real paper.
+  const caseReport = {
+    DOI: "10.1/cr",
+    title: ["Case report"],
+    author: [{ family: "Smith" }],
+    published: { "date-parts": [[2021]] },
+  };
+  route((u) => (u.includes("crossref") ? { message: { items: [caseReport] } } : {}));
+  const r = await checkFreeTextRef("Smith J. Case report of a wholly invented syndrome. Ghost Med J. 2021;5:1-3.");
+  expect(r.status).not.toBe("verified");
+  expect(r.status).toBe("partial_match");
+});
+
 test("a retracted matched work is flagged", async () => {
   route((u) => {
     if (u.includes("crossref")) return { message: { items: [{ ...watsonItem, title: ["RETRACTED: Molecular structure of nucleic acids"] }] } };

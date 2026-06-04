@@ -21,6 +21,18 @@ export interface Containment {
   surnameHit: boolean;
   /** Candidate's publication year present in the raw reference. */
   yearHit: boolean;
+  /** A DOI in the raw reference exactly matches the candidate's DOI. */
+  doiHit: boolean;
+}
+
+/** Matches a DOI anywhere in free text. The path component runs until whitespace
+ * or a quote/angle-bracket so a trailing `.`/`,`/`)` stays attached and is
+ * stripped separately (DOIs may legitimately contain `.` and `)`). */
+const DOI_RE = /10\.\d{4,9}\/[^\s"'<>]+/i;
+
+/** Lowercase a DOI and strip a trailing run of sentence punctuation. */
+function normDoi(doi: string): string {
+  return doi.toLowerCase().replace(/[.,;:)\]]+$/, "");
 }
 
 /** Measure how much of the candidate's identifying tokens appear in `raw`. Pure. */
@@ -56,6 +68,13 @@ export function computeContainment(raw: string, candidate: crossref.CrossrefWork
   const surnameHit = surnameParts.length > 0 && surnameParts.every((p) => rawTokens.has(p));
 
   const year = crossref.extractYear(candidate);
+  // Blank out any DOI substring BEFORE the year test. A DOI's path component can
+  // contain a 4-digit run that coincides with the candidate year (e.g.
+  // `doi:10.1234/2019.x`), which the standalone-date regex below would otherwise
+  // accept as a spurious yearHit — manufacturing a corroborating signal from an
+  // identifier, not a date. Replacing the DOI with a space leaves real date forms
+  // (`(2019).`, `1953;171:`, ` 1953 `) untouched.
+  const rawForYear = raw.replace(/10\.\d{4,9}\/[^\s]+/gi, " ");
   // Accept the candidate year only as a STANDALONE 4-digit run, never as the
   // endpoint of a numeric range. The lookbehind/lookahead exclude an adjacent
   // digit AND the dash family (ASCII hyphen plus U+2012–U+2015: figure/en/em
@@ -65,10 +84,21 @@ export function computeContainment(raw: string, candidate: crossref.CrossrefWork
   // would manufacture a spurious yearHit from a coincidental 4-digit run,
   // corroborating a weak title overlap and flipping a fabricated reference from
   // partial_match to "verified". Real date forms — `(2019).`, `1953;171:`,
-  // `1905.`, ` 1953 ` — are unaffected. Residual (accepted, see review): a year
-  // inside a DOI/URL like `10.1/2019.x` can still match.
+  // `1905.`, ` 1953 ` — are unaffected.
   const yearHit =
-    year != null && new RegExp(`(?<![\\d\\-\\u2012-\\u2015])${year}(?![\\d\\-\\u2012-\\u2015])`).test(raw);
+    year != null &&
+    new RegExp(`(?<![\\d\\-\\u2012-\\u2015])${year}(?![\\d\\-\\u2012-\\u2015])`).test(rawForYear);
+
+  // An exact DOI match is the strongest identity signal a free-text reference can
+  // carry: it points at one specific record. Extract the first DOI from the raw
+  // reference, normalize both sides (lowercase, strip a `https?://(dx.)?doi.org/`
+  // prefix off the candidate, strip trailing sentence punctuation off the raw),
+  // and set doiHit on an exact match.
+  const rawDoiMatch = raw.match(DOI_RE);
+  const candidateDoi = candidate.DOI
+    ? normDoi(candidate.DOI.replace(/^https?:\/\/(dx\.)?doi\.org\//i, ""))
+    : "";
+  const doiHit = rawDoiMatch != null && candidateDoi !== "" && normDoi(rawDoiMatch[0]) === candidateDoi;
 
   return {
     titleContainment: Math.round(titleContainment * 100) / 100,
@@ -76,6 +106,7 @@ export function computeContainment(raw: string, candidate: crossref.CrossrefWork
     titleTokenCount: titleTokens.length,
     surnameHit,
     yearHit,
+    doiHit,
   };
 }
 
@@ -86,16 +117,22 @@ export function computeContainment(raw: string, candidate: crossref.CrossrefWork
  */
 export function verdictFor(c: Containment, candidateHasYear: boolean): CheckVerdict {
   const yearOk = c.yearHit || !candidateHasYear;
-  // Absolute floor on matched title content-words. A single shared word
-  // saturates titleContainment to 1.0 when the candidate's title has only one
-  // content token (e.g. Crossref's abundant "Editorial", "Preface", "An
-  // Obituary" notices) — so a fabricated ref reusing that one generic word plus
-  // a colliding surname + year would clear ANY containment threshold. Requiring
-  // at least two matched title content-words makes the title carry real
-  // identifying signal before surname+year can corroborate it to "verified".
-  // A faithful single-content-word title correctly drops to partial_match — the
-  // conservative outcome for a fabrication-catcher.
-  const enoughTitleTokens = c.matchedTitleTokens >= 2;
+  // An exact DOI match to the record Crossref returned is conclusive: a DOI names
+  // one specific work, so a surname hit on top of it leaves no plausible room for
+  // a coincidental collision. This short-circuits ahead of the title checks.
+  if (c.doiHit && c.surnameHit) return "verified";
+  // Title-only path. A short/generic candidate title ("Case report", "Original
+  // article", "Book review") saturates titleContainment to 1.0 on just 2 shared
+  // content words that any fabricated reference might coincidentally include — so
+  // surname + year is NOT enough to verify against such a candidate. Requiring at
+  // least FOUR matched title content-words would be safest, but that floor drops
+  // legitimately short genuine titles: e.g. "Zur Elektrodynamik bewegter Körper"
+  // yields only 3 content tokens (zur is a stopword) yet is a real, distinctive
+  // title. THREE is the discriminating threshold — it keeps such 3-token real
+  // titles verified while still rejecting the 2-token generic-title fabrications
+  // (the "Case report" fake caps at partial_match). It is the lowest floor that
+  // preserves canonical recall without re-opening the anti-inversion hole.
+  const enoughTitleTokens = c.matchedTitleTokens >= 3;
   if (enoughTitleTokens && c.titleContainment >= 0.7 && c.surnameHit && yearOk) return "verified";
   // Subtitle-drop tolerance: citations routinely omit a candidate's post-colon
   // subtitle, which drags titleContainment below 0.7 even for faithful refs

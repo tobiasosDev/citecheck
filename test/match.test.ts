@@ -27,7 +27,7 @@ test("computeContainment: a fabricated reference does NOT contain the candidate'
 
 test("verdictFor: high containment + surname + year => verified", () => {
   expect(
-    verdictFor({ titleContainment: 1, matchedTitleTokens: 4, titleTokenCount: 4, surnameHit: true, yearHit: true }, true),
+    verdictFor({ titleContainment: 1, matchedTitleTokens: 4, titleTokenCount: 4, surnameHit: true, yearHit: true, doiHit: false }, true),
   ).toBe("verified");
 });
 
@@ -37,7 +37,7 @@ test("verdictFor: strong title but missing surname => partial_match", () => {
   // this is what makes the test exercise the surname guard rather than passing
   // because the (silently omitted) title-token floor was not met.
   expect(
-    verdictFor({ titleContainment: 0.9, matchedTitleTokens: 4, titleTokenCount: 4, surnameHit: false, yearHit: true }, true),
+    verdictFor({ titleContainment: 0.9, matchedTitleTokens: 4, titleTokenCount: 4, surnameHit: false, yearHit: true, doiHit: false }, true),
   ).toBe("partial_match");
 });
 
@@ -45,19 +45,19 @@ test("verdictFor: strong title WITH surname => verified (surname guard, positive
   // Pairs the negative case above: the same strong-title input verifies once the
   // surname hits, pinning the surname guard from both sides.
   expect(
-    verdictFor({ titleContainment: 0.9, matchedTitleTokens: 4, titleTokenCount: 4, surnameHit: true, yearHit: true }, true),
+    verdictFor({ titleContainment: 0.9, matchedTitleTokens: 4, titleTokenCount: 4, surnameHit: true, yearHit: true, doiHit: false }, true),
   ).toBe("verified");
 });
 
 test("verdictFor: low containment => not_found (anti-inversion guard)", () => {
   expect(
-    verdictFor({ titleContainment: 0.1, matchedTitleTokens: 0, titleTokenCount: 4, surnameHit: false, yearHit: false }, true),
+    verdictFor({ titleContainment: 0.1, matchedTitleTokens: 0, titleTokenCount: 4, surnameHit: false, yearHit: false, doiHit: false }, true),
   ).toBe("not_found");
 });
 
 test("verdictFor: candidate without a year does not require a year hit", () => {
   expect(
-    verdictFor({ titleContainment: 0.8, matchedTitleTokens: 4, titleTokenCount: 4, surnameHit: true, yearHit: false }, false),
+    verdictFor({ titleContainment: 0.8, matchedTitleTokens: 4, titleTokenCount: 4, surnameHit: true, yearHit: false, doiHit: false }, false),
   ).toBe("verified");
 });
 
@@ -76,13 +76,13 @@ test("computeContainment: matches a compound (multi-word) surname", () => {
 
 test("verdictFor: at the 0.7 title boundary without a year => partial_match", () => {
   expect(
-    verdictFor({ titleContainment: 0.7, matchedTitleTokens: 4, titleTokenCount: 4, surnameHit: true, yearHit: false }, true),
+    verdictFor({ titleContainment: 0.7, matchedTitleTokens: 4, titleTokenCount: 4, surnameHit: true, yearHit: false, doiHit: false }, true),
   ).toBe("partial_match");
 });
 
 test("verdictFor: just below 0.45 => not_found", () => {
   expect(
-    verdictFor({ titleContainment: 0.44, matchedTitleTokens: 2, titleTokenCount: 4, surnameHit: true, yearHit: true }, true),
+    verdictFor({ titleContainment: 0.44, matchedTitleTokens: 2, titleTokenCount: 4, surnameHit: true, yearHit: true, doiHit: false }, true),
   ).toBe("not_found");
 });
 
@@ -108,7 +108,7 @@ test("verdictFor: subtitle tolerance requires a POSITIVE year hit, not just abse
   // Year mismatch (yearHit false, candidate has a year) must stay partial,
   // even with strong surname — a wrong year is real signal, not a subtitle artifact.
   expect(
-    verdictFor({ titleContainment: 0.6, matchedTitleTokens: 4, titleTokenCount: 4, surnameHit: true, yearHit: false }, true),
+    verdictFor({ titleContainment: 0.6, matchedTitleTokens: 4, titleTokenCount: 4, surnameHit: true, yearHit: false, doiHit: false }, true),
   ).toBe("partial_match");
 });
 
@@ -116,7 +116,7 @@ test("verdictFor: subtitle tolerance does NOT verify on title overlap alone (gen
   // Guards against sliding toward pre-colon-only scoring: a fabricated ref that
   // reuses a generic main title scores low full-title containment and must reject.
   expect(
-    verdictFor({ titleContainment: 0.14, matchedTitleTokens: 1, titleTokenCount: 7, surnameHit: true, yearHit: true }, true),
+    verdictFor({ titleContainment: 0.14, matchedTitleTokens: 1, titleTokenCount: 7, surnameHit: true, yearHit: true, doiHit: false }, true),
   ).toBe("not_found");
 });
 
@@ -172,13 +172,13 @@ test("verdictFor: a one-content-word title cannot auto-verify (single-token floo
   // word plus a colliding surname + year must NOT earn a green checkmark — it
   // caps at partial_match because only one title content-token matched.
   expect(
-    verdictFor({ titleContainment: 1, matchedTitleTokens: 1, titleTokenCount: 1, surnameHit: true, yearHit: true }, true),
+    verdictFor({ titleContainment: 1, matchedTitleTokens: 1, titleTokenCount: 1, surnameHit: true, yearHit: true, doiHit: false }, true),
   ).toBe("partial_match");
   // The 2-content-word / 0.5-branch variant is also gated: one of two tokens
   // matched (e.g. candidate "Cancer genomics", ref shares only "cancer") stays
   // below the floor and must not verify on surname+year either.
   expect(
-    verdictFor({ titleContainment: 0.5, matchedTitleTokens: 1, titleTokenCount: 2, surnameHit: true, yearHit: true }, true),
+    verdictFor({ titleContainment: 0.5, matchedTitleTokens: 1, titleTokenCount: 2, surnameHit: true, yearHit: true, doiHit: false }, true),
   ).toBe("partial_match");
 });
 
@@ -319,4 +319,112 @@ test("computeContainment+verdictFor: fabricated single-word-title ref resolves t
   expect(c.surnameHit).toBe(true);
   expect(c.yearHit).toBe(true);
   expect(verdictFor(c, true)).toBe("partial_match");
+});
+
+test("verdictFor: a 2-token generic title + surname + year must NOT verify (anti-inversion floor)", () => {
+  // The C1 hole: a candidate generic short title ("Case report") saturates
+  // titleContainment to 1.0 on just 2 shared content words. A fabricated ref that
+  // happens to contain those 2 generic words plus a colliding surname + year must
+  // NOT earn a green checkmark — the matched-token floor of 3 holds it at
+  // partial_match (1.0 >= 0.45, so never not_found via the title-only path).
+  expect(
+    verdictFor(
+      { titleContainment: 1, matchedTitleTokens: 2, titleTokenCount: 2, surnameHit: true, yearHit: true, doiHit: false },
+      true,
+    ),
+  ).toBe("partial_match");
+});
+
+test("verdictFor: an exact DOI match + surname is conclusive (verified) even with a weak/short title", () => {
+  // A DOI names one specific record, so a surname hit on top of an exact DOI match
+  // leaves no plausible coincidental collision — it verifies regardless of how few
+  // title tokens overlap or whether the year hits.
+  expect(
+    verdictFor(
+      { titleContainment: 0.1, matchedTitleTokens: 0, titleTokenCount: 5, surnameHit: true, yearHit: false, doiHit: true },
+      true,
+    ),
+  ).toBe("verified");
+  // But a DOI hit WITHOUT a surname is not enough on its own (a stray DOI pasted
+  // into an otherwise unrelated/fabricated reference shouldn't auto-verify).
+  expect(
+    verdictFor(
+      { titleContainment: 0.1, matchedTitleTokens: 0, titleTokenCount: 5, surnameHit: false, yearHit: false, doiHit: true },
+      true,
+    ),
+  ).toBe("not_found");
+});
+
+test("computeContainment: doiHit is set on an exact DOI match and ignores a URL prefix / trailing punctuation", () => {
+  const work: CrossrefWork = {
+    DOI: "10.1038/171737a0",
+    title: ["Molecular structure of nucleic acids"],
+    author: [{ family: "Watson" }],
+    published: { "date-parts": [[1953]] },
+  };
+  // Bare DOI with a trailing period (sentence punctuation must be stripped).
+  expect(computeContainment("Watson JD. Some title. doi:10.1038/171737a0.", work).doiHit).toBe(true);
+  // doi.org URL form in the raw, matched against the bare candidate DOI.
+  expect(computeContainment("Watson JD. Some title. https://doi.org/10.1038/171737a0", work).doiHit).toBe(true);
+  // Candidate carries a URL prefix; raw has the bare DOI — both normalize equal.
+  const urlWork: CrossrefWork = { ...work, DOI: "https://doi.org/10.1038/171737a0" };
+  expect(computeContainment("Watson JD. Some title. 10.1038/171737a0", urlWork).doiHit).toBe(true);
+  // A different DOI does NOT hit.
+  expect(computeContainment("Watson JD. Some title. doi:10.9999/other.x", work).doiHit).toBe(false);
+  // No DOI in the raw => no hit.
+  expect(computeContainment("Watson JD. Some title. 1953.", work).doiHit).toBe(false);
+});
+
+test("computeContainment: a year appearing ONLY inside a DOI does not register as a yearHit (M1)", () => {
+  // The DOI's path component carries the 4-digit run "2019"; with the candidate
+  // year 2019, the standalone-date regex would spuriously fire without the
+  // DOI-stripping pre-pass. There is no real date elsewhere, so yearHit must be
+  // false.
+  const work2019: CrossrefWork = {
+    DOI: "10.1234/2019.abc",
+    title: ["Some paper title here"],
+    author: [{ family: "Author" }],
+    published: { "date-parts": [[2019]] },
+  };
+  expect(computeContainment("Author A. Some paper title here. doi:10.1234/2019.abc", work2019).yearHit).toBe(false);
+  // Control: the SAME ref with a real standalone year present still hits.
+  expect(
+    computeContainment("Author A. Some paper title here (2019). doi:10.1234/2019.abc", work2019).yearHit,
+  ).toBe(true);
+});
+
+test("computeContainment+verdictFor: canonical real references (3- and 4-token titles) still verify", () => {
+  // Recall guard for the C1 fix: lowering the matched-token floor to 3 (from the
+  // safest 4) is what keeps genuine but short distinctive titles green.
+  // Watson (4 content tokens), Vaswani (4), Einstein (3 — "zur" is a stopword).
+  const watsonFull: CrossrefWork = {
+    DOI: "10.1038/171737a0",
+    title: ["Molecular Structure of Nucleic Acids: A Structure for Deoxyribose Nucleic Acid"],
+    author: [{ family: "Watson" }, { family: "Crick" }],
+    published: { "date-parts": [[1953]] },
+  };
+  const watsonRaw = "Watson JD, Crick FHC. Molecular structure of nucleic acids. Nature. 1953;171:737-738.";
+  expect(verdictFor(computeContainment(watsonRaw, watsonFull), true)).toBe("verified");
+
+  const vaswani: CrossrefWork = {
+    DOI: "10.5555/3295222.3295349",
+    title: ["Attention Is All You Need"],
+    author: [{ family: "Vaswani" }],
+    published: { "date-parts": [[2017]] },
+  };
+  const vaswaniRaw = "Vaswani A, Shazeer N, et al. Attention is all you need. NeurIPS. 2017.";
+  const vc = computeContainment(vaswaniRaw, vaswani);
+  expect(vc.matchedTitleTokens).toBe(4);
+  expect(verdictFor(vc, true)).toBe("verified");
+
+  const einstein: CrossrefWork = {
+    DOI: "10.1002/andp.19053221004",
+    title: ["Zur Elektrodynamik bewegter Körper"],
+    author: [{ family: "Einstein" }],
+    published: { "date-parts": [[1905]] },
+  };
+  const einsteinRaw = "Einstein A. Zur Elektrodynamik bewegter Körper. Annalen der Physik. 1905;17:891-921.";
+  const ec = computeContainment(einsteinRaw, einstein);
+  expect(ec.matchedTitleTokens).toBe(3); // distinctive 3-token title (zur is a stopword)
+  expect(verdictFor(ec, true)).toBe("verified");
 });
