@@ -51,11 +51,10 @@ export function tooLargeMessage(bytes: number): string {
 /**
  * Reject inputs whose extracted text exceeds this.
  *
- * NOTE: this is a post-extraction cap. It does NOT bound .docx zip-bomb
- * amplification: mammoth/JSZip fully decompress every entry into memory before
- * returning a string, so a small compressed bomb is already allocated by the
- * time this fires. The MAX_INPUT_BYTES guard above bounds the compressed input,
- * which limits (but does not eliminate) the worst-case uncompressed payload.
+ * NOTE: this is a post-extraction cap. The .docx ingester also has a
+ * pre-extraction decompression-amplification guard (rejectIfZipBomb in
+ * src/ingest/docx.ts) that inspects the ZIP central directory without
+ * inflating data, bounding the uncompressed payload before mammoth runs.
  */
 const MAX_TEXT_CHARS = 5_000_000;
 

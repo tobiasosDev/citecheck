@@ -51,6 +51,70 @@ test("docxIngester extracts raw text via mammoth and passes a { buffer: Buffer }
   expect(Array.from(arg.buffer as Buffer)).toEqual(Array.from(inputBytes));
 });
 
+// ---------------------------------------------------------------------------
+// Zip-bomb guard tests
+// ---------------------------------------------------------------------------
+
+/**
+ * Build a minimal in-memory ZIP buffer containing one central-directory entry
+ * (no actual compressed data) and a matching EOCD record.
+ *
+ * Layout: [46-byte CD entry][22-byte EOCD]
+ *
+ * @param uncompressedSize  The value to write into the CD entry's
+ *                          uncompressed-size field (uint32 LE, entry offset +24).
+ */
+function buildMinimalZipCD(uncompressedSize: number): Uint8Array {
+  // Total: 46 (CD entry) + 22 (EOCD) = 68 bytes.
+  const buf = new ArrayBuffer(68);
+  const v = new DataView(buf);
+  const CD_OFFSET = 0;
+  const EOCD_OFFSET = 46;
+
+  // --- Central-directory entry ---
+  // Signature PK\x01\x02
+  v.setUint8(CD_OFFSET + 0, 0x50);
+  v.setUint8(CD_OFFSET + 1, 0x4b);
+  v.setUint8(CD_OFFSET + 2, 0x01);
+  v.setUint8(CD_OFFSET + 3, 0x02);
+  // Uncompressed size at +24 (uint32 LE)
+  v.setUint32(CD_OFFSET + 24, uncompressedSize, /*littleEndian=*/true);
+  // name/extra/comment lengths at +28/+30/+32 all 0 (zero-initialised)
+
+  // --- End Of Central Directory record ---
+  // Signature PK\x05\x06
+  v.setUint8(EOCD_OFFSET + 0, 0x50);
+  v.setUint8(EOCD_OFFSET + 1, 0x4b);
+  v.setUint8(EOCD_OFFSET + 2, 0x05);
+  v.setUint8(EOCD_OFFSET + 3, 0x06);
+  // Total entry count (disk + total) at +8/+10 — uint16 LE = 1
+  v.setUint16(EOCD_OFFSET + 8, 1, true);
+  v.setUint16(EOCD_OFFSET + 10, 1, true);
+  // CD offset at +16 — uint32 LE = 0 (CD starts at byte 0)
+  v.setUint32(EOCD_OFFSET + 16, CD_OFFSET, true);
+
+  return new Uint8Array(buf);
+}
+
+test("zip-bomb guard rejects ZIP whose total uncompressed size exceeds the cap", async () => {
+  const { docxIngester } = await import("../src/ingest/docx.js");
+  // 0x0D000000 = 218,103,808 bytes ≈ 208 MB — just over the 200 MB cap
+  const oversized = buildMinimalZipCD(0x0d000000);
+  await expect(docxIngester.extractText(oversized)).rejects.toThrow(/too large/i);
+});
+
+test("zip-bomb guard fails open on a buffer with no EOCD (4-byte ZIP magic only)", async () => {
+  // Stub mammoth so the test doesn't depend on real mammoth behaviour.
+  mock.module("mammoth", () => ({
+    extractRawText: async (_input: unknown) => ({ value: "ok", messages: [] }),
+  }));
+  const { docxIngester } = await import("../src/ingest/docx.js");
+  // The 4-byte-magic buffer has no EOCD — guard must NOT throw the size error.
+  const noEocd = new Uint8Array([0x50, 0x4b, 0x03, 0x04]);
+  // Guard fails open → mammoth stub runs → resolves to "ok"
+  await expect(docxIngester.extractText(noEocd)).resolves.toBe("ok");
+});
+
 import { extractDocumentText, formatOf } from "../src/ingest/index.js";
 
 test("formatOf maps extensions", () => {
