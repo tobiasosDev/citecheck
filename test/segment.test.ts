@@ -27,6 +27,19 @@ test("blank-line separated entries", () => {
   expect(refs[0]).toContain("Titel eins");
 });
 
+test("numbered list: a wrapped continuation line starting with a year is not a new entry", () => {
+  const block = [
+    "[1] Watson JD. Molecular structure. Nature. 1953.",
+    "[2] Einstein A. Zur Elektrodynamik bewegter Körper. Annalen der Physik",
+    "1905. 17:891-921.",
+    "[3] García M. Hallucinated refs. 2023.",
+  ].join("\n");
+  const refs = segmentReferences(block);
+  expect(refs.length).toBe(3);
+  // The continuation must fold into entry 2, not split off as "17:891-921.".
+  expect(refs[1]).toBe("Einstein A. Zur Elektrodynamik bewegter Körper. Annalen der Physik 1905. 17:891-921.");
+});
+
 test("fallback: one line = one reference", () => {
   const block = "Ref one on a line.\nRef two on a line.\nRef three.";
   expect(segmentReferences(block).length).toBe(3);

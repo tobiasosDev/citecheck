@@ -52,3 +52,16 @@ test("checkDocument throws when no text can be extracted", async () => {
     checkDocument({ bytes: new TextEncoder().encode("   "), filename: "empty.txt" }),
   ).rejects.toThrow(/no text/i);
 });
+
+test("checkDocument refuses a heading-less document with too many candidate lines (no API calls)", async () => {
+  // No "References" heading => whole document scanned one-line-per-reference.
+  // 201 non-blank lines exceeds the cap, so it must refuse BEFORE any network call.
+  let fetchCalls = 0;
+  globalThis.fetch = (async () => { fetchCalls++; return new Response("{}", { status: 200 }); }) as typeof fetch;
+
+  const lines = Array.from({ length: 201 }, (_, i) => `Some prose line number ${i + 1} that looks like a reference.`);
+  await expect(
+    checkDocument({ bytes: new TextEncoder().encode(lines.join("\n")), filename: "ebook.txt" }),
+  ).rejects.toThrow(/no bibliography heading found.*too long/i);
+  expect(fetchCalls).toBe(0);
+});

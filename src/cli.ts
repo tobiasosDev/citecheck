@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { readFile } from "node:fs/promises";
+import { readFile, stat } from "node:fs/promises";
 import { extname } from "node:path";
 import { quickCheck, type CitationCheckResult } from "./quick-check.js";
 import { parseBib } from "./bib-parser.js";
@@ -204,9 +204,21 @@ async function runStructured(args: Args): Promise<number> {
 
 const DOC_EXT = /\.(docx|txt|md|markdown)$/i;
 
+/** Refuse oversized inputs before reading them into memory. */
+const MAX_FILE_BYTES = 10 * 1024 * 1024;
+
 async function runDocument(args: Args): Promise<number> {
   let bytes: Uint8Array;
   try {
+    const info = await stat(args.file!);
+    if (info.size > MAX_FILE_BYTES) {
+      process.stderr.write(
+        red(
+          `File too large to scan (${Math.round(info.size / (1024 * 1024))} MB) — extract the bibliography to a .bib/.ris/CSL-JSON file instead.\n`,
+        ),
+      );
+      return 2;
+    }
     bytes = await readFile(args.file!);
   } catch (err) {
     process.stderr.write(red(`Could not read ${args.file}: ${(err as Error).message}\n`));
@@ -238,6 +250,9 @@ async function runDocument(args: Args): Promise<number> {
     process.stdout.write("\n" + dim(`Detected ${n} reference${n === 1 ? "" : "s"} in the bibliography — verify this matches your paper.\n`));
   } else {
     process.stdout.write("\n" + yellow(`No bibliography heading found — scanned the whole document (low confidence). Detected ${n} candidate reference${n === 1 ? "" : "s"} — verify this matches your paper.\n`));
+  }
+  if (extraction.truncated) {
+    process.stdout.write(yellow(`Too many candidate references — only the first ${n} were checked. The bibliography may not have been isolated; add a "References" heading.\n`));
   }
   process.stdout.write(dim("Only the reference text is sent to Crossref/OpenAlex/DOAJ — your document is never uploaded or stored.\n\n"));
 

@@ -67,6 +67,39 @@ test("Crossref unreachable => check_failed", async () => {
   expect(r.status).toBe("check_failed");
 });
 
+test("partial_match: retains title/match, warns, and still enriches via OpenAlex/DOAJ", async () => {
+  // Raw ref overlaps the candidate title at ~0.5 (molecular, structure of
+  // {molecular, structure, nucleic, acids}), surname present, year absent —
+  // lands in the partial_match band (0.45–0.69, no verified double-signal).
+  route((u) => {
+    if (u.includes("crossref")) return { message: { items: [watsonItem] } };
+    if (u.includes("openalex")) return { cited_by_count: 9000, is_oa: false, primary_location: { source: { display_name: "Nature" } } };
+    if (u.includes("doaj")) return { total: 0 };
+    return {};
+  });
+  const r = await checkFreeTextRef("Watson JD. Molecular structure observations in cells.");
+  expect(r.status).toBe("partial_match");
+  // Unlike not_found, partial_match must RETAIN the candidate's title/match.
+  expect(r.title).toBe("Molecular structure of nucleic acids");
+  expect(r.crossrefMatch?.doi).toBe("10.1038/171737a0");
+  expect(r.warnings.some((w) => /partially matches/i.test(w))).toBe(true);
+  expect(r.warnings.some((w) => /publication year not found/i.test(w))).toBe(true);
+  // Enrichment must still run on a partial_match.
+  expect(r.openalexMatch?.journalName).toBe("Nature");
+});
+
+test("doaj_listed override fires when OpenAlex reports is_in_doaj even if ISSN lookup said not_listed", async () => {
+  route((u) => {
+    if (u.includes("crossref")) return { message: { items: [watsonItem] } };
+    if (u.includes("openalex")) return { cited_by_count: 9000, is_oa: true, primary_location: { source: { display_name: "Nature", is_in_doaj: true } } };
+    if (u.includes("doaj")) return { total: 0 }; // ISSN lookup => not_listed
+    return {};
+  });
+  const r = await checkFreeTextRef("Watson JD, Crick FHC. Molecular structure of nucleic acids. Nature. 1953;171:737-738.");
+  expect(r.status).toBe("verified");
+  expect(r.journalStatus).toBe("doaj_listed");
+});
+
 test("a retracted matched work is flagged", async () => {
   route((u) => {
     if (u.includes("crossref")) return { message: { items: [{ ...watsonItem, title: ["RETRACTED: Molecular structure of nucleic acids"] }] } };

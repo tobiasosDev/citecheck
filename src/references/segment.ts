@@ -1,4 +1,6 @@
-const NUM_MARKER = /^\s*(?:\[\d+\]|\(\d+\)|\d+[.)])\s+/;
+// List markers cap at 3 digits so a wrapped continuation line that starts with
+// a 4-digit year (e.g. "1905. 17:891-921.") is not mistaken for a new entry.
+const NUM_MARKER = /^\s*(?:\[\d{1,3}\]|\(\d{1,3}\)|\d{1,3}[.)])\s+/;
 
 function collapse(s: string): string {
   return s.replace(/\s+/g, " ").trim();
