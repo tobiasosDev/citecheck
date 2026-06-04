@@ -91,3 +91,43 @@ test("verdictFor: subtitle tolerance does NOT verify on title overlap alone (gen
   // reuses a generic main title scores low full-title containment and must reject.
   expect(verdictFor({ titleContainment: 0.14, surnameHit: true, yearHit: true }, true)).toBe("not_found");
 });
+
+test("computeContainment: a pure-digit title token must not be auto-satisfied by the ref's year", () => {
+  // Candidate title "Global health 2020": only the alphabetic tokens
+  // {global, health} are title content; "2020" is dropped. The fabricated raw
+  // shares "global" + the year 2020 but NOT "health". Without the digit filter,
+  // "2020" would count as a 3rd title token satisfied by the publication year,
+  // lifting containment from 1/2 (0.5) to 2/3 (0.67) — a number doubling as both
+  // yearHit AND a title-content token. The fix must keep it at 0.5: the digit
+  // corroborates via yearHit only, never as a free title token.
+  const numericTitle: CrossrefWork = {
+    DOI: "10.1/g",
+    title: ["Global health 2020"],
+    author: [{ family: "Smith" }],
+    published: { "date-parts": [[2020]] },
+  };
+  const raw = "Smith J. Global frameworks for resilience. Imaginary Press 2020.";
+  const withDigit = computeContainment(raw, numericTitle);
+  // Control: the SAME title with the trailing digit removed. The digit must not
+  // change containment at all — it is invisible to the title-token set.
+  const noDigit: CrossrefWork = { ...numericTitle, title: ["Global health"] };
+  const withoutDigit = computeContainment(raw, noDigit);
+  expect(withDigit.titleContainment).toBe(0.5); // 1 of 2 content tokens (global), NOT 2 of 3
+  expect(withDigit.titleContainment).toBe(withoutDigit.titleContainment);
+});
+
+test("computeContainment: a digit-bearing real title keeps its alphabetic identity token", () => {
+  // Recall guard: punctuation is stripped before tokenizing, so digit-bearing
+  // titles keep an identifying word ("Trial 2020" -> {trial, 2020} -> {trial}).
+  const trial: CrossrefWork = {
+    DOI: "10.1/t",
+    title: ["Trial 2020"],
+    author: [{ family: "Watson" }],
+    published: { "date-parts": [[2020]] },
+  };
+  const faithful = computeContainment("Watson JD. Trial. Lancet. 2020;1:1-2.", trial);
+  expect(faithful.titleContainment).toBe(1); // {trial} fully present
+  expect(faithful.surnameHit).toBe(true);
+  expect(faithful.yearHit).toBe(true);
+  expect(verdictFor(faithful, true)).toBe("verified");
+});

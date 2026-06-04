@@ -8,6 +8,7 @@ import { parseCslJson } from "./csl-json.js";
 import type { CslItemData } from "./types.js";
 import { VERSION } from "./http.js";
 import { checkDocument, type CheckDocumentResult } from "./document.js";
+import { formatOf } from "./ingest/index.js";
 
 const USE_COLOR = Boolean(process.stdout.isTTY) && !process.env.NO_COLOR;
 const c = (code: string, s: string) => (USE_COLOR ? `\x1b[${code}m${s}\x1b[0m` : s);
@@ -202,8 +203,6 @@ async function runStructured(args: Args): Promise<number> {
   return writeSummaryAndExitCode(result.citations, args.json);
 }
 
-const DOC_EXT = /\.(docx|txt|md|markdown)$/i;
-
 /** Refuse oversized inputs before reading them into memory. */
 const MAX_FILE_BYTES = 10 * 1024 * 1024;
 
@@ -245,14 +244,15 @@ async function runDocument(args: Args): Promise<number> {
     return writeSummaryAndExitCode(result.citations, true);
   }
 
-  const n = result.citations.length;
+  const n = extraction.referencesDetected;
+  const checked = extraction.referencesChecked;
   if (extraction.sectionFound) {
     process.stdout.write("\n" + dim(`Detected ${n} reference${n === 1 ? "" : "s"} in the bibliography — verify this matches your paper.\n`));
   } else {
     process.stdout.write("\n" + yellow(`No bibliography heading found — scanned the whole document (low confidence). Detected ${n} candidate reference${n === 1 ? "" : "s"} — verify this matches your paper.\n`));
   }
   if (extraction.truncated) {
-    process.stdout.write(yellow(`Too many candidate references — only the first ${n} were checked. The bibliography may not have been isolated; add a "References" heading.\n`));
+    process.stdout.write(yellow(`Too many candidate references — only the first ${checked} of ${n} were checked. The bibliography may not have been isolated; add a "References" heading.\n`));
   }
   process.stdout.write(dim("Only the reference text is sent to Crossref/OpenAlex/DOAJ — your document is never uploaded or stored.\n\n"));
 
@@ -276,7 +276,7 @@ async function main(): Promise<number> {
   if (!args.file) { process.stderr.write(HELP); return 2; }
   if (args.mailto) process.env.CITECHECK_MAILTO = args.mailto;
 
-  if (args.file !== "-" && DOC_EXT.test(args.file)) {
+  if (args.file !== "-" && formatOf(args.file) !== null) {
     return runDocument(args);
   }
   return runStructured(args);

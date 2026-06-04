@@ -26,7 +26,15 @@ export function computeContainment(raw: string, candidate: crossref.CrossrefWork
 
   const titleTokens = [
     ...new Set(
-      normalizeTitle(candidate.title?.[0]).split(" ").filter((w) => w && !STOPWORDS.has(w)),
+      normalizeTitle(candidate.title?.[0])
+        .split(" ")
+        // Drop stopwords AND pure-digit tokens: a number in a candidate title
+        // (e.g. a year in "Global health 2020") would otherwise count as a
+        // title-content token and be auto-satisfied by the reference's own
+        // publication year/volume/page — inflating containment and letting a
+        // fabricated ref clear the anti-inversion guard. A number must
+        // corroborate via yearHit only, not double as a title-content token.
+        .filter((w) => w && !STOPWORDS.has(w) && !/^\d+$/.test(w)),
     ),
   ];
   let hit = 0;

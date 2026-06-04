@@ -7,7 +7,10 @@ import type { QuickCheckResult, CitationCheckResult } from "./quick-check.js";
 export interface DocumentExtraction {
   format: "docx" | "txt" | "md";
   sectionFound: boolean;
+  /** How many candidate references were FOUND (the true detected count, never capped). */
   referencesDetected: number;
+  /** How many were actually CHECKED — equals referencesDetected unless truncated, then MAX_REFS. */
+  referencesChecked: number;
   confidence: "high" | "low";
   /** True when more than MAX_REFS candidates were found and only the first MAX_REFS were checked. */
   truncated: boolean;
@@ -25,7 +28,22 @@ export interface CheckDocumentResult {
  */
 const MAX_REFS = 200;
 
-/** Reject inputs whose extracted text exceeds this (also caps .docx zip-bomb amplification). */
+/**
+ * Reject inputs whose RAW (on-disk) byte size exceeds this, before any
+ * extraction. checkDocument is a public library export, so this guard must live
+ * here — not only in the CLI — or a direct caller has no input-size protection.
+ */
+const MAX_INPUT_BYTES = 10 * 1024 * 1024;
+
+/**
+ * Reject inputs whose extracted text exceeds this.
+ *
+ * NOTE: this is a post-extraction cap. It does NOT bound .docx zip-bomb
+ * amplification: mammoth/JSZip fully decompress every entry into memory before
+ * returning a string, so a small compressed bomb is already allocated by the
+ * time this fires. The MAX_INPUT_BYTES guard above bounds the compressed input,
+ * which limits (but does not eliminate) the worst-case uncompressed payload.
+ */
 const MAX_TEXT_CHARS = 5_000_000;
 
 /**
@@ -39,6 +57,11 @@ export async function checkDocument(
   const format = formatOf(input.filename);
   if (format === null) {
     throw new Error(`Unsupported document format: ${input.filename}`);
+  }
+  if (input.bytes.length > MAX_INPUT_BYTES) {
+    throw new Error(
+      `File too large to scan (${Math.round(input.bytes.length / (1024 * 1024))} MB) — extract the bibliography to a .bib/.ris/CSL-JSON file instead.`,
+    );
   }
   const text = await extractDocumentText(input);
   if (text.trim().length === 0) {
@@ -79,7 +102,8 @@ export async function checkDocument(
     extraction: {
       format,
       sectionFound: located.sectionFound,
-      referencesDetected: refs.length,
+      referencesDetected: allRefs.length,
+      referencesChecked: refs.length,
       confidence: located.confidence,
       truncated,
     },

@@ -42,6 +42,8 @@ test("checkDocument: real reference verifies, fabricated reference is not_found"
   expect(out.extraction.sectionFound).toBe(true);
   expect(out.extraction.confidence).toBe("high");
   expect(out.extraction.referencesDetected).toBe(2);
+  expect(out.extraction.referencesChecked).toBe(2);
+  expect(out.extraction.truncated).toBe(false);
   expect(out.result.citations[0]!.status).toBe("verified");
   expect(out.result.citations[1]!.status).toBe("not_found");
   expect(out.result.citations[0]!.sourceRef).toContain("Watson");
@@ -63,5 +65,48 @@ test("checkDocument refuses a heading-less document with too many candidate line
   await expect(
     checkDocument({ bytes: new TextEncoder().encode(lines.join("\n")), filename: "ebook.txt" }),
   ).rejects.toThrow(/no bibliography heading found.*too long/i);
+  expect(fetchCalls).toBe(0);
+});
+
+test("checkDocument caps a real >MAX_REFS bibliography at 200, sets truncated, keeps the true detected count", async () => {
+  // High-confidence path: a "References" heading with 201 numbered entries is a
+  // legitimate (e.g. systematic-review) bibliography. It must NOT refuse; it must
+  // cap CHECKED at 200, set truncated, surface the true DETECTED count (201), and
+  // dispatch at most 200 Crossref searches (not 201+).
+  let crossrefCalls = 0;
+  globalThis.fetch = (async (url: string | URL) => {
+    const u = String(url);
+    if (u.includes("api.crossref.org")) {
+      crossrefCalls++;
+      return new Response(JSON.stringify({ message: { items: [] } }), { status: 200 });
+    }
+    return new Response("{}", { status: 200 });
+  }) as typeof fetch;
+
+  const entries = Array.from({ length: 201 }, (_, i) => `[${i + 1}] Author ${i + 1}. Some title number ${i + 1}. Journal of Things. ${1900 + (i % 120)}.`);
+  const doc = ["References", ...entries].join("\n");
+
+  const out = await checkDocument({ bytes: new TextEncoder().encode(doc), filename: "review.txt" });
+
+  expect(out.extraction.sectionFound).toBe(true);
+  expect(out.extraction.truncated).toBe(true);
+  expect(out.extraction.referencesDetected).toBe(201);
+  expect(out.extraction.referencesChecked).toBe(200);
+  expect(out.result.citations.length).toBe(200);
+  // Empty crossref items => every ref is not_found, so no OpenAlex/DOAJ follow-on:
+  // the counter lands at exactly 200, proving the cap bounds outbound HTTP.
+  expect(crossrefCalls).toBe(200);
+});
+
+test("checkDocument rejects an oversized input before extraction (library-level byte guard)", async () => {
+  // checkDocument is a public export; the byte guard must live in it, not only in
+  // the CLI. A >10 MB input is refused before any extraction/network work.
+  let fetchCalls = 0;
+  globalThis.fetch = (async () => { fetchCalls++; return new Response("{}", { status: 200 }); }) as typeof fetch;
+
+  const big = new Uint8Array(10 * 1024 * 1024 + 1);
+  await expect(
+    checkDocument({ bytes: big, filename: "huge.txt" }),
+  ).rejects.toThrow(/too large/i);
   expect(fetchCalls).toBe(0);
 });
