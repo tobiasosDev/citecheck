@@ -110,3 +110,25 @@ test("checkDocument rejects an oversized input before extraction (library-level 
   ).rejects.toThrow(/too large/i);
   expect(fetchCalls).toBe(0);
 });
+
+test("checkDocument rejects when extracted text exceeds the char cap (post-extraction guard)", async () => {
+  // The post-extraction MAX_TEXT_CHARS guard is independent of the byte guard:
+  // a ~6 MB plain-ASCII .txt passes the 10 MB byte guard (under MAX_INPUT_BYTES)
+  // yet decodes to ~6M chars, exceeding the 5M-char cap. This is the
+  // security-relevant guard (the documented partial mitigation for .docx
+  // zip-bomb amplification), so it must fire BEFORE any network work — like the
+  // byte-guard test. The /MB of text/i discriminator proves we hit the char cap
+  // and not the byte guard.
+  let fetchCalls = 0;
+  globalThis.fetch = (async () => { fetchCalls++; return new Response("{}", { status: 200 }); }) as typeof fetch;
+
+  const bytes = new TextEncoder().encode("a".repeat(6_000_000)); // ~6M chars, ~6 MB < 10 MB
+  expect(bytes.length).toBeLessThan(10 * 1024 * 1024); // confirm the byte guard does NOT fire
+  await expect(
+    checkDocument({ bytes, filename: "fat.txt" }),
+  ).rejects.toThrow(/too large to scan/i);
+  await expect(
+    checkDocument({ bytes, filename: "fat.txt" }),
+  ).rejects.toThrow(/MB of text/i);
+  expect(fetchCalls).toBe(0);
+});

@@ -246,6 +246,62 @@ test("computeContainment+verdictFor: a fabricated CJK ref still rejects (anti-in
   expect(verdictFor(c, true)).toBe("not_found");
 });
 
+test("computeContainment: yearHit ignores a numeric-range endpoint, but real date forms still hit", () => {
+  // The candidate year must only count as a STANDALONE date, never as the end
+  // (or start) of a numeric range, or a coincidental 4-digit run manufactures a
+  // spurious corroborating signal. Pin BOTH directions: range endpoints reject,
+  // real date forms still match (so future over-tightening can't silently kill
+  // legitimate years).
+  const work1953: CrossrefWork = {
+    DOI: "10.1/r",
+    title: ["Some paper title"],
+    author: [{ family: "Author" }],
+    published: { "date-parts": [[1953]] },
+  };
+  const work2019: CrossrefWork = { ...work1953, published: { "date-parts": [[2019]] } };
+
+  // Range endpoints must NOT count as a year hit:
+  expect(computeContainment("Author. Some paper title. pp. 2015-2019.", work2019).yearHit).toBe(false); // ASCII range end
+  expect(computeContainment("Author. Some paper title. pp. 2015–2019.", work2019).yearHit).toBe(false); // en-dash range end
+  expect(computeContainment("Author. Some paper title. 1953-1960.", work1953).yearHit).toBe(false); // span start (ASCII)
+  expect(computeContainment("Author. Some paper title. 171:1953-1960.", work1953).yearHit).toBe(false); // vol:page span start
+
+  // Real date forms must still hit:
+  expect(computeContainment("Author. Some paper title (2019). J Things.", work2019).yearHit).toBe(true); // (2019).
+  expect(computeContainment("Author. Some paper title. 1953;171:737-738.", work1953).yearHit).toBe(true); // 1953;171:
+  expect(computeContainment("Author. Some paper title. 1953 .", work1953).yearHit).toBe(true); // spaced year
+});
+
+test("computeContainment+verdictFor: a page-range year coincidence must NOT flip a fabrication to verified", () => {
+  // DECISIVE/CONTROL pair from the review. Candidate is a real generic paper
+  // (Watson 1953) sharing only "molecular structure" (0.5 containment) + surname
+  // with a fabricated ref whose ACTUAL publication year is 2008. In the DECISIVE
+  // raw, the page range ends on 1953 — under the old regex that coincidence
+  // produced yearHit=true and verified a fabrication via the 0.5/surname+year
+  // branch. The narrowed regex must keep yearHit=false here so the verdict stays
+  // partial_match (anti-inversion). The CONTROL raw (benign page range) is the
+  // same input minus the year coincidence and must also stay partial_match.
+  const watsonGeneric: CrossrefWork = {
+    DOI: "10.1038/171737a0",
+    title: ["Molecular structure of nucleic acids"],
+    author: [{ family: "Watson" }],
+    published: { "date-parts": [[1953]] },
+  };
+  const decisive = "Watson R. Molecular structure of imaginary lattices. Ghost J. 2008;3:1949-1953.";
+  const control = "Watson R. Molecular structure of imaginary lattices. Ghost J. 2008;3:11-19.";
+
+  const dc = computeContainment(decisive, watsonGeneric);
+  const cc = computeContainment(control, watsonGeneric);
+  // Same weak title overlap (0.5) and surname hit in both; only the spurious
+  // year coincidence differs — and it must NOT register.
+  expect(dc.titleContainment).toBe(0.5);
+  expect(dc.surnameHit).toBe(true);
+  expect(dc.yearHit).toBe(false); // page-range endpoint 1953 must not count
+  expect(cc.yearHit).toBe(false);
+  expect(verdictFor(dc, true)).toBe("partial_match"); // NOT verified
+  expect(verdictFor(cc, true)).toBe("partial_match");
+});
+
 test("computeContainment+verdictFor: fabricated single-word-title ref resolves to partial_match end-to-end", () => {
   // A real Crossref short-title notice (one content token "obituary") shares only
   // a common surname + year + that one generic word with a fabricated reference.

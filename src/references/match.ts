@@ -56,7 +56,19 @@ export function computeContainment(raw: string, candidate: crossref.CrossrefWork
   const surnameHit = surnameParts.length > 0 && surnameParts.every((p) => rawTokens.has(p));
 
   const year = crossref.extractYear(candidate);
-  const yearHit = year != null && new RegExp(`(?<!\\d)${year}(?!\\d)`).test(raw);
+  // Accept the candidate year only as a STANDALONE 4-digit run, never as the
+  // endpoint of a numeric range. The lookbehind/lookahead exclude an adjacent
+  // digit AND the dash family (ASCII hyphen plus U+2012–U+2015: figure/en/em
+  // dash, horizontal bar — the en dash is the typographically standard range
+  // separator in real bibliographies). Without this, a page range
+  // (`pp. 2015–2019`, `1949-1953`) or a volume:page span (`171:1953-1960`)
+  // would manufacture a spurious yearHit from a coincidental 4-digit run,
+  // corroborating a weak title overlap and flipping a fabricated reference from
+  // partial_match to "verified". Real date forms — `(2019).`, `1953;171:`,
+  // `1905.`, ` 1953 ` — are unaffected. Residual (accepted, see review): a year
+  // inside a DOI/URL like `10.1/2019.x` can still match.
+  const yearHit =
+    year != null && new RegExp(`(?<![\\d\\-\\u2012-\\u2015])${year}(?![\\d\\-\\u2012-\\u2015])`).test(raw);
 
   return {
     titleContainment: Math.round(titleContainment * 100) / 100,

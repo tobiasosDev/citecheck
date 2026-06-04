@@ -32,8 +32,21 @@ const MAX_REFS = 200;
  * Reject inputs whose RAW (on-disk) byte size exceeds this, before any
  * extraction. checkDocument is a public library export, so this guard must live
  * here — not only in the CLI — or a direct caller has no input-size protection.
+ *
+ * Exported as the SINGLE source of truth for the byte limit: the CLI's pre-read
+ * stat guard (cli.ts) imports this same constant so bumping the limit can never
+ * leave the two guards out of sync.
  */
-const MAX_INPUT_BYTES = 10 * 1024 * 1024;
+export const MAX_INPUT_BYTES = 10 * 1024 * 1024;
+
+/**
+ * Build the user-facing "file too large" message for the byte guard. Exported so
+ * the CLI's pre-read guard and this library-level guard share one wording.
+ * Returns PLAIN text (no color, no trailing newline) — callers add their own.
+ */
+export function tooLargeMessage(bytes: number): string {
+  return `File too large to scan (${Math.round(bytes / (1024 * 1024))} MB) — extract the bibliography to a .bib/.ris/CSL-JSON file instead.`;
+}
 
 /**
  * Reject inputs whose extracted text exceeds this.
@@ -59,9 +72,7 @@ export async function checkDocument(
     throw new Error(`Unsupported document format: ${input.filename}`);
   }
   if (input.bytes.length > MAX_INPUT_BYTES) {
-    throw new Error(
-      `File too large to scan (${Math.round(input.bytes.length / (1024 * 1024))} MB) — extract the bibliography to a .bib/.ris/CSL-JSON file instead.`,
-    );
+    throw new Error(tooLargeMessage(input.bytes.length));
   }
   const text = await extractDocumentText(input);
   if (text.trim().length === 0) {

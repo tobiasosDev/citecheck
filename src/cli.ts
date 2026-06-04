@@ -7,7 +7,7 @@ import { parseRis } from "./ris-parser.js";
 import { parseCslJson } from "./csl-json.js";
 import type { CslItemData } from "./types.js";
 import { VERSION } from "./http.js";
-import { checkDocument, type CheckDocumentResult } from "./document.js";
+import { checkDocument, MAX_INPUT_BYTES, tooLargeMessage, type CheckDocumentResult } from "./document.js";
 import { formatOf } from "./ingest/index.js";
 
 const USE_COLOR = Boolean(process.stdout.isTTY) && !process.env.NO_COLOR;
@@ -203,19 +203,15 @@ async function runStructured(args: Args): Promise<number> {
   return writeSummaryAndExitCode(result.citations, args.json);
 }
 
-/** Refuse oversized inputs before reading them into memory. */
-const MAX_FILE_BYTES = 10 * 1024 * 1024;
-
 async function runDocument(args: Args): Promise<number> {
   let bytes: Uint8Array;
   try {
+    // Pre-read stat guard: refuse oversized inputs before loading them into
+    // memory. Shares MAX_INPUT_BYTES and tooLargeMessage with the library-level
+    // guard in document.ts so the limit and wording have one source of truth.
     const info = await stat(args.file!);
-    if (info.size > MAX_FILE_BYTES) {
-      process.stderr.write(
-        red(
-          `File too large to scan (${Math.round(info.size / (1024 * 1024))} MB) — extract the bibliography to a .bib/.ris/CSL-JSON file instead.\n`,
-        ),
-      );
+    if (info.size > MAX_INPUT_BYTES) {
+      process.stderr.write(red(tooLargeMessage(info.size) + "\n"));
       return 2;
     }
     bytes = await readFile(args.file!);
