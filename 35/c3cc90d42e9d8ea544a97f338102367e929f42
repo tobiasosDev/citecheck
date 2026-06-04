@@ -1,0 +1,19 @@
+README.md
+  s_e6decd44838371::t_f2db4d42eb267b 99-123
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "35c3cc90d42e9d8ea544a97f338102367e929f42",
+  "prompts": {},
+  "sessions": {
+    "s_e6decd44838371": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fec64bcb-6419-43a4-9a9f-2d3b982ddc4b",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Tobias Lüscher <17859972+tobiasosDev@users.noreply.github.com>"
+    }
+  }
+}
