@@ -1,4 +1,4 @@
-import { test, expect } from "bun:test";
+import { test, expect, mock } from "bun:test";
 import { textIngester } from "../src/ingest/text.js";
 
 test("textIngester handles .txt and .md, not .docx", () => {
@@ -10,4 +10,21 @@ test("textIngester handles .txt and .md, not .docx", () => {
 test("textIngester decodes utf8 bytes", async () => {
   const bytes = new TextEncoder().encode("Grüße — héllo");
   expect(await textIngester.extractText(bytes)).toBe("Grüße — héllo");
+});
+
+test("docxIngester.canHandle requires .docx extension AND zip magic bytes", async () => {
+  const { docxIngester } = await import("../src/ingest/docx.js");
+  const zip = new Uint8Array([0x50, 0x4b, 0x03, 0x04]);
+  expect(docxIngester.canHandle("a.docx", zip)).toBe(true);
+  expect(docxIngester.canHandle("a.docx", new Uint8Array([0, 0, 0, 0]))).toBe(false);
+  expect(docxIngester.canHandle("a.txt", zip)).toBe(false);
+});
+
+test("docxIngester extracts raw text via mammoth", async () => {
+  mock.module("mammoth", () => ({
+    extractRawText: async (_input: unknown) => ({ value: "Hello from docx", messages: [] }),
+  }));
+  const { docxIngester } = await import("../src/ingest/docx.js");
+  const out = await docxIngester.extractText(new Uint8Array([0x50, 0x4b, 0x03, 0x04]));
+  expect(out).toBe("Hello from docx");
 });
