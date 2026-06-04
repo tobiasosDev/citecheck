@@ -1,0 +1,22 @@
+test/match-network.test.ts
+  s_e6decd44838371::t_d86dea2844dbba 1-65
+src/references/match.ts
+  s_e6decd44838371::t_4971b98720918b 3,5-7
+  s_e6decd44838371::t_48a91d53af7b44 67-149
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "adee45c36b2ccc07226861d1a7ad4b2657478a13",
+  "prompts": {},
+  "sessions": {
+    "s_e6decd44838371": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fec64bcb-6419-43a4-9a9f-2d3b982ddc4b",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Tobias Lüscher <17859972+tobiasosDev@users.noreply.github.com>"
+    }
+  }
+}
