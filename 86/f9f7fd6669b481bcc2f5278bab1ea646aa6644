@@ -1,0 +1,32 @@
+test/document.test.ts
+  s_e6decd44838371::t_31f62550954169 55-67
+src/cli.ts
+  s_e6decd44838371::t_fdeee9ebff9f7b 207-209,213-221
+  s_e6decd44838371::t_9a85ac5bb5dfd9 2
+  s_e6decd44838371::t_81241e517bdd9b 254-256
+test/segment.test.ts
+  s_e6decd44838371::t_90479c1eb39e17 30-42
+test/match-network.test.ts
+  s_e6decd44838371::t_1ad75d2f8dd75f 70-102
+src/document.ts
+  s_e6decd44838371::t_34c57ccbdfbd61 8,12-13,21-29
+  s_e6decd44838371::t_ddc4132dec3e87 39-42,47-51,54-69,84
+src/references/segment.ts
+  s_e6decd44838371::t_bc83ca02f35788 1-3
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "86f9f7fd6669b481bcc2f5278bab1ea646aa6644",
+  "prompts": {},
+  "sessions": {
+    "s_e6decd44838371": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fec64bcb-6419-43a4-9a9f-2d3b982ddc4b",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Tobias Lüscher <17859972+tobiasosDev@users.noreply.github.com>"
+    }
+  }
+}
