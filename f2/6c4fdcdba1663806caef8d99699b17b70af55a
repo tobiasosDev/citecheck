@@ -1,0 +1,29 @@
+test/document.test.ts
+  s_e6decd44838371::t_2600acd9aa0423 113-134
+src/references/match.ts
+  s_e6decd44838371::t_95bd86ccbb91f9 59-71
+src/document.ts
+  s_e6decd44838371::t_68fab1285b7e07 35-38,40-49
+  s_e6decd44838371::t_9fd2dff46d4cf8 75
+src/cli.ts
+  s_e6decd44838371::t_74471649c1e684 10
+  s_e6decd44838371::t_e68242e4484a72 209-211,213-214
+test/match.test.ts
+  s_e6decd44838371::t_103f02e0ee35d9 249-304
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "f26c4fdcdba1663806caef8d99699b17b70af55a",
+  "prompts": {},
+  "sessions": {
+    "s_e6decd44838371": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fec64bcb-6419-43a4-9a9f-2d3b982ddc4b",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Tobias Lüscher <17859972+tobiasosDev@users.noreply.github.com>"
+    }
+  }
+}
