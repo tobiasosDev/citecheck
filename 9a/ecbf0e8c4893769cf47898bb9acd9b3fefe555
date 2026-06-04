@@ -1,0 +1,41 @@
+test/match-network.test.ts
+  s_e6decd44838371::t_032e5329a40ac7 157-169,171,175-199
+  s_e6decd44838371::t_2e8715e96f019d 156,170,172-174
+src/references/match.ts
+  s_e6decd44838371::t_5652340b5a1b35 31-35
+  s_e6decd44838371::t_4a8a298ae3035c 130
+  s_e6decd44838371::t_82492c4c1b4e04 150-161
+  s_e6decd44838371::t_0733622aeffd5e 13-25
+  s_e6decd44838371::t_43bee3b86f9295 75-81
+test/match.test.ts
+  s_e6decd44838371::t_685da5927b63c6 40
+  s_e6decd44838371::t_8f0a1e89806923 175,181
+  s_e6decd44838371::t_308cfe8b9ade38 119
+  s_e6decd44838371::t_aa61d71752505b 326-330,333
+  s_e6decd44838371::t_9a79dcbb0dabf0 339-392
+  s_e6decd44838371::t_ef14504ec10bc9 48
+  s_e6decd44838371::t_d3583386d2a2d9 407
+  s_e6decd44838371::t_c48f886d653627 111
+  s_e6decd44838371::t_044107c78e5805 399
+  s_e6decd44838371::t_476655ae5b0ad3 54
+  s_e6decd44838371::t_7e9c92ea898819 30
+  s_e6decd44838371::t_56b6b796ccfae3 60
+  s_e6decd44838371::t_14b99dc1569095 85
+  s_e6decd44838371::t_e8e786e2a083ac 79
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "9aecbf0e8c4893769cf47898bb9acd9b3fefe555",
+  "prompts": {},
+  "sessions": {
+    "s_e6decd44838371": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fec64bcb-6419-43a4-9a9f-2d3b982ddc4b",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": null
+    }
+  }
+}
