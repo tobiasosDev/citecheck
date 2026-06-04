@@ -27,7 +27,7 @@ test("computeContainment: a fabricated reference does NOT contain the candidate'
 
 test("verdictFor: high containment + surname + year => verified", () => {
   expect(
-    verdictFor({ titleContainment: 1, matchedTitleTokens: 4, titleTokenCount: 4, surnameHit: true, yearHit: true, doiHit: false }, true),
+    verdictFor({ titleContainment: 1, matchedTitleTokens: 4, distinctiveMatchedTokens: 4, titleTokenCount: 4, surnameHit: true, yearHit: true, doiHit: false }, true),
   ).toBe("verified");
 });
 
@@ -37,7 +37,7 @@ test("verdictFor: strong title but missing surname => partial_match", () => {
   // this is what makes the test exercise the surname guard rather than passing
   // because the (silently omitted) title-token floor was not met.
   expect(
-    verdictFor({ titleContainment: 0.9, matchedTitleTokens: 4, titleTokenCount: 4, surnameHit: false, yearHit: true, doiHit: false }, true),
+    verdictFor({ titleContainment: 0.9, matchedTitleTokens: 4, distinctiveMatchedTokens: 4, titleTokenCount: 4, surnameHit: false, yearHit: true, doiHit: false }, true),
   ).toBe("partial_match");
 });
 
@@ -45,19 +45,19 @@ test("verdictFor: strong title WITH surname => verified (surname guard, positive
   // Pairs the negative case above: the same strong-title input verifies once the
   // surname hits, pinning the surname guard from both sides.
   expect(
-    verdictFor({ titleContainment: 0.9, matchedTitleTokens: 4, titleTokenCount: 4, surnameHit: true, yearHit: true, doiHit: false }, true),
+    verdictFor({ titleContainment: 0.9, matchedTitleTokens: 4, distinctiveMatchedTokens: 4, titleTokenCount: 4, surnameHit: true, yearHit: true, doiHit: false }, true),
   ).toBe("verified");
 });
 
 test("verdictFor: low containment => not_found (anti-inversion guard)", () => {
   expect(
-    verdictFor({ titleContainment: 0.1, matchedTitleTokens: 0, titleTokenCount: 4, surnameHit: false, yearHit: false, doiHit: false }, true),
+    verdictFor({ titleContainment: 0.1, matchedTitleTokens: 0, distinctiveMatchedTokens: 0, titleTokenCount: 4, surnameHit: false, yearHit: false, doiHit: false }, true),
   ).toBe("not_found");
 });
 
 test("verdictFor: candidate without a year does not require a year hit", () => {
   expect(
-    verdictFor({ titleContainment: 0.8, matchedTitleTokens: 4, titleTokenCount: 4, surnameHit: true, yearHit: false, doiHit: false }, false),
+    verdictFor({ titleContainment: 0.8, matchedTitleTokens: 4, distinctiveMatchedTokens: 4, titleTokenCount: 4, surnameHit: true, yearHit: false, doiHit: false }, false),
   ).toBe("verified");
 });
 
@@ -76,13 +76,13 @@ test("computeContainment: matches a compound (multi-word) surname", () => {
 
 test("verdictFor: at the 0.7 title boundary without a year => partial_match", () => {
   expect(
-    verdictFor({ titleContainment: 0.7, matchedTitleTokens: 4, titleTokenCount: 4, surnameHit: true, yearHit: false, doiHit: false }, true),
+    verdictFor({ titleContainment: 0.7, matchedTitleTokens: 4, distinctiveMatchedTokens: 4, titleTokenCount: 4, surnameHit: true, yearHit: false, doiHit: false }, true),
   ).toBe("partial_match");
 });
 
 test("verdictFor: just below 0.45 => not_found", () => {
   expect(
-    verdictFor({ titleContainment: 0.44, matchedTitleTokens: 2, titleTokenCount: 4, surnameHit: true, yearHit: true, doiHit: false }, true),
+    verdictFor({ titleContainment: 0.44, matchedTitleTokens: 2, distinctiveMatchedTokens: 2, titleTokenCount: 4, surnameHit: true, yearHit: true, doiHit: false }, true),
   ).toBe("not_found");
 });
 
@@ -108,7 +108,7 @@ test("verdictFor: subtitle tolerance requires a POSITIVE year hit, not just abse
   // Year mismatch (yearHit false, candidate has a year) must stay partial,
   // even with strong surname — a wrong year is real signal, not a subtitle artifact.
   expect(
-    verdictFor({ titleContainment: 0.6, matchedTitleTokens: 4, titleTokenCount: 4, surnameHit: true, yearHit: false, doiHit: false }, true),
+    verdictFor({ titleContainment: 0.6, matchedTitleTokens: 4, distinctiveMatchedTokens: 4, titleTokenCount: 4, surnameHit: true, yearHit: false, doiHit: false }, true),
   ).toBe("partial_match");
 });
 
@@ -116,7 +116,7 @@ test("verdictFor: subtitle tolerance does NOT verify on title overlap alone (gen
   // Guards against sliding toward pre-colon-only scoring: a fabricated ref that
   // reuses a generic main title scores low full-title containment and must reject.
   expect(
-    verdictFor({ titleContainment: 0.14, matchedTitleTokens: 1, titleTokenCount: 7, surnameHit: true, yearHit: true, doiHit: false }, true),
+    verdictFor({ titleContainment: 0.14, matchedTitleTokens: 1, distinctiveMatchedTokens: 1, titleTokenCount: 7, surnameHit: true, yearHit: true, doiHit: false }, true),
   ).toBe("not_found");
 });
 
@@ -172,13 +172,13 @@ test("verdictFor: a one-content-word title cannot auto-verify (single-token floo
   // word plus a colliding surname + year must NOT earn a green checkmark — it
   // caps at partial_match because only one title content-token matched.
   expect(
-    verdictFor({ titleContainment: 1, matchedTitleTokens: 1, titleTokenCount: 1, surnameHit: true, yearHit: true, doiHit: false }, true),
+    verdictFor({ titleContainment: 1, matchedTitleTokens: 1, distinctiveMatchedTokens: 1, titleTokenCount: 1, surnameHit: true, yearHit: true, doiHit: false }, true),
   ).toBe("partial_match");
   // The 2-content-word / 0.5-branch variant is also gated: one of two tokens
   // matched (e.g. candidate "Cancer genomics", ref shares only "cancer") stays
   // below the floor and must not verify on surname+year either.
   expect(
-    verdictFor({ titleContainment: 0.5, matchedTitleTokens: 1, titleTokenCount: 2, surnameHit: true, yearHit: true, doiHit: false }, true),
+    verdictFor({ titleContainment: 0.5, matchedTitleTokens: 1, distinctiveMatchedTokens: 1, titleTokenCount: 2, surnameHit: true, yearHit: true, doiHit: false }, true),
   ).toBe("partial_match");
 });
 
@@ -323,16 +323,71 @@ test("computeContainment+verdictFor: fabricated single-word-title ref resolves t
 
 test("verdictFor: a 2-token generic title + surname + year must NOT verify (anti-inversion floor)", () => {
   // The C1 hole: a candidate generic short title ("Case report") saturates
-  // titleContainment to 1.0 on just 2 shared content words. A fabricated ref that
-  // happens to contain those 2 generic words plus a colliding surname + year must
-  // NOT earn a green checkmark — the matched-token floor of 3 holds it at
-  // partial_match (1.0 >= 0.45, so never not_found via the title-only path).
+  // titleContainment to 1.0 on just 2 shared content words — but BOTH are generic
+  // publication-TYPE words, so distinctiveMatchedTokens is 0. A fabricated ref
+  // that happens to contain those 2 generic words plus a colliding surname + year
+  // must NOT earn a green checkmark — the distinctive-token floor (>= 2) holds it
+  // at partial_match (1.0 >= 0.45, so never not_found via the title-only path).
   expect(
     verdictFor(
-      { titleContainment: 1, matchedTitleTokens: 2, titleTokenCount: 2, surnameHit: true, yearHit: true, doiHit: false },
+      { titleContainment: 1, matchedTitleTokens: 2, distinctiveMatchedTokens: 0, titleTokenCount: 2, surnameHit: true, yearHit: true, doiHit: false },
       true,
     ),
   ).toBe("partial_match");
+});
+
+test("verdictFor: an all-generic matched title + surname + year must NOT verify (distinctiveness floor)", () => {
+  // The residual the count-only floor could not close: a candidate title made
+  // entirely of generic publication-TYPE words ("Original research article" = 3
+  // matched tokens) clears any matched-COUNT floor, but every matched token is
+  // generic so distinctiveMatchedTokens is 0. With surname + year and no DOI it
+  // must stay partial_match — three generic matched words carry zero identifying
+  // signal, so the matched COUNT alone (3) must NOT verify.
+  expect(
+    verdictFor(
+      { titleContainment: 1, matchedTitleTokens: 3, distinctiveMatchedTokens: 0, titleTokenCount: 3, surnameHit: true, yearHit: true, doiHit: false },
+      true,
+    ),
+  ).toBe("partial_match");
+});
+
+test("verdictFor: two distinctive matched tokens + surname + year => verified (positive side of the floor)", () => {
+  // Pins the floor from the other side: as soon as TWO matched tokens are
+  // distinctive (not generic publication-TYPE words), surname + year verifies.
+  // This is the minimum a genuine short distinctive title needs to clear.
+  expect(
+    verdictFor(
+      { titleContainment: 0.8, matchedTitleTokens: 2, distinctiveMatchedTokens: 2, titleTokenCount: 2, surnameHit: true, yearHit: true, doiHit: false },
+      true,
+    ),
+  ).toBe("verified");
+});
+
+test("computeContainment: distinctiveMatchedTokens excludes generic publication-TYPE words", () => {
+  // "Original research article" is 3 matched content tokens, all generic, so
+  // distinctiveMatchedTokens must be 0 — that is what closes the residual.
+  const generic: CrossrefWork = {
+    DOI: "10.1/ora",
+    title: ["Original research article"],
+    author: [{ family: "Jones" }],
+    published: { "date-parts": [[2022]] },
+  };
+  const c = computeContainment(
+    "Jones B. Original research article describing a fictional reaction. Imaginary Chem. 2022;8:1-9.",
+    generic,
+  );
+  expect(c.matchedTitleTokens).toBe(3);
+  expect(c.distinctiveMatchedTokens).toBe(0);
+  expect(verdictFor(c, true)).toBe("partial_match");
+  // A real distinctive title counts its matched tokens as distinctive.
+  const real: CrossrefWork = {
+    DOI: "10.1/x",
+    title: ["Attention Is All You Need"],
+    author: [{ family: "Vaswani" }],
+    published: { "date-parts": [[2017]] },
+  };
+  const rc = computeContainment("Vaswani A. Attention is all you need. NeurIPS. 2017.", real);
+  expect(rc.distinctiveMatchedTokens).toBe(4);
 });
 
 test("verdictFor: an exact DOI match + surname is conclusive (verified) even with a weak/short title", () => {
@@ -341,7 +396,7 @@ test("verdictFor: an exact DOI match + surname is conclusive (verified) even wit
   // title tokens overlap or whether the year hits.
   expect(
     verdictFor(
-      { titleContainment: 0.1, matchedTitleTokens: 0, titleTokenCount: 5, surnameHit: true, yearHit: false, doiHit: true },
+      { titleContainment: 0.1, matchedTitleTokens: 0, distinctiveMatchedTokens: 0, titleTokenCount: 5, surnameHit: true, yearHit: false, doiHit: true },
       true,
     ),
   ).toBe("verified");
@@ -349,7 +404,7 @@ test("verdictFor: an exact DOI match + surname is conclusive (verified) even wit
   // into an otherwise unrelated/fabricated reference shouldn't auto-verify).
   expect(
     verdictFor(
-      { titleContainment: 0.1, matchedTitleTokens: 0, titleTokenCount: 5, surnameHit: false, yearHit: false, doiHit: true },
+      { titleContainment: 0.1, matchedTitleTokens: 0, distinctiveMatchedTokens: 0, titleTokenCount: 5, surnameHit: false, yearHit: false, doiHit: true },
       true,
     ),
   ).toBe("not_found");

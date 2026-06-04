@@ -153,6 +153,50 @@ test("anti-inversion: a generic short-title candidate must NOT verify a fabricat
   expect(r.status).toBe("partial_match");
 });
 
+test("anti-inversion: an all-generic 3-token title candidate must NOT verify a fabrication (distinctiveness floor)", async () => {
+  // The residual a matched-COUNT floor could not close. Crossref returns its
+  // generic "Original research article" notice (3 matched content tokens, all
+  // generic publication-TYPE words) as the nearest guess for a fabricated ref that
+  // merely contains those words plus a colliding surname + year. The 3 matched
+  // tokens would clear a count-only floor, but distinctiveMatchedTokens is 0, so
+  // the verdict must NOT be "verified" — it caps at partial_match.
+  const origResearch = {
+    DOI: "10.1/ora",
+    title: ["Original research article"],
+    author: [{ family: "Jones" }],
+    published: { "date-parts": [[2022]] },
+  };
+  route((u) => (u.includes("crossref") ? { message: { items: [origResearch] } } : {}));
+  const r = await checkFreeTextRef(
+    "Jones B. Original research article describing a fictional reaction. Imaginary Chem. 2022;8:1-9.",
+  );
+  expect(r.status).not.toBe("verified");
+  expect(r.status).toBe("partial_match");
+});
+
+test("a generic-title candidate WITH a matching DOI in the raw + surname => verified (DOI overrides the distinctiveness floor)", async () => {
+  // An exact DOI match names one specific record, so it verifies even a generic
+  // title with zero distinctive matched tokens: the DOI + surname short-circuit
+  // fires ahead of the title checks. DOI is real-shaped (DOI_RE needs 4–9 digits)
+  // and present in BOTH the candidate and the raw, with the surname in the raw.
+  const generic = {
+    DOI: "10.1038/abc123",
+    title: ["Original research article"],
+    author: [{ family: "Smith" }],
+    published: { "date-parts": [[2021]] },
+    ISSN: ["0028-0836"],
+  };
+  route((u) => {
+    if (u.includes("crossref")) return { message: { items: [generic] } };
+    if (u.includes("openalex")) return { cited_by_count: 5, is_oa: false, primary_location: { source: { display_name: "Nature" } } };
+    if (u.includes("doaj")) return { total: 0 };
+    return {};
+  });
+  const r = await checkFreeTextRef("Smith J. Original research article. Nature. 2021. doi:10.1038/abc123.");
+  expect(r.status).toBe("verified");
+  expect(r.crossrefMatch?.doi).toBe("10.1038/abc123");
+});
+
 test("a retracted matched work is flagged", async () => {
   route((u) => {
     if (u.includes("crossref")) return { message: { items: [{ ...watsonItem, title: ["RETRACTED: Molecular structure of nucleic acids"] }] } };

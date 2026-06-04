@@ -10,11 +10,29 @@ const STOPWORDS = new Set(
   ),
 );
 
+/** Publication-TYPE words that are almost never distinctive on their own. A
+ * candidate title made entirely of these ("Original research article", "Case
+ * report") carries no identifying signal, so matching them must NOT count toward
+ * the anti-inversion distinctiveness floor. These are post-normalizeTitle,
+ * lowercase forms. Deliberately TYPE words only — content-bearing words (study,
+ * analysis, effects, results, role, impact, survey) are excluded because they
+ * can legitimately distinguish a real title. */
+const GENERIC_TITLE_TERMS = new Set(
+  "case report reports original research article articles review reviews editorial editorials letter letters correspondence communication communications commentary comment comments erratum corrigendum retraction introduction preface foreword abstract note notes reply response addendum proceedings supplement chapter book poster news overview".split(
+    " ",
+  ),
+);
+
 export interface Containment {
   /** Fraction of the candidate's title content-words present in the raw reference. */
   titleContainment: number;
   /** Absolute count of candidate title content-words present in the raw reference. */
   matchedTitleTokens: number;
+  /** Count of matched title content-words that are NOT generic publication-TYPE
+   * words. A count-only floor can't tell a distinctive short title from a generic
+   * one ("Original research article" = 3 generic tokens); this counts only the
+   * tokens that actually carry identifying signal. */
+  distinctiveMatchedTokens: number;
   /** Total count of candidate title content-words (after stopword/digit filtering). */
   titleTokenCount: number;
   /** Candidate's first-author surname present in the raw reference. */
@@ -54,7 +72,13 @@ export function computeContainment(raw: string, candidate: crossref.CrossrefWork
     ),
   ];
   let hit = 0;
-  for (const t of titleTokens) if (rawTokens.has(t)) hit++;
+  let distinctiveHit = 0;
+  for (const t of titleTokens) {
+    if (rawTokens.has(t)) {
+      hit++;
+      if (!GENERIC_TITLE_TERMS.has(t)) distinctiveHit++;
+    }
+  }
   const titleContainment = titleTokens.length === 0 ? 0 : hit / titleTokens.length;
 
   // Fold the surname through the SAME normalizer as the raw reference (rawTokens
@@ -103,6 +127,7 @@ export function computeContainment(raw: string, candidate: crossref.CrossrefWork
   return {
     titleContainment: Math.round(titleContainment * 100) / 100,
     matchedTitleTokens: hit,
+    distinctiveMatchedTokens: distinctiveHit,
     titleTokenCount: titleTokens.length,
     surnameHit,
     yearHit,
@@ -122,17 +147,18 @@ export function verdictFor(c: Containment, candidateHasYear: boolean): CheckVerd
   // a coincidental collision. This short-circuits ahead of the title checks.
   if (c.doiHit && c.surnameHit) return "verified";
   // Title-only path. A short/generic candidate title ("Case report", "Original
-  // article", "Book review") saturates titleContainment to 1.0 on just 2 shared
-  // content words that any fabricated reference might coincidentally include — so
-  // surname + year is NOT enough to verify against such a candidate. Requiring at
-  // least FOUR matched title content-words would be safest, but that floor drops
-  // legitimately short genuine titles: e.g. "Zur Elektrodynamik bewegter Körper"
-  // yields only 3 content tokens (zur is a stopword) yet is a real, distinctive
-  // title. THREE is the discriminating threshold — it keeps such 3-token real
-  // titles verified while still rejecting the 2-token generic-title fabrications
-  // (the "Case report" fake caps at partial_match). It is the lowest floor that
-  // preserves canonical recall without re-opening the anti-inversion hole.
-  const enoughTitleTokens = c.matchedTitleTokens >= 3;
+  // research article", "Book review") saturates titleContainment to 1.0 on a few
+  // shared publication-TYPE words that any fabricated reference might
+  // coincidentally include — so surname + year is NOT enough to verify against
+  // such a candidate. A bare matched-token COUNT can't tell a distinctive short
+  // title from a generic one: "Original research article" is 3 matched tokens but
+  // zero identifying signal. The floor is therefore on DISTINCTIVE matched tokens
+  // (those NOT in GENERIC_TITLE_TERMS). Requiring at least TWO distinctive tokens
+  // keeps genuine short titles verified — "Zur Elektrodynamik bewegter Körper"
+  // has 3 distinctive tokens (zur is a stopword), Vaswani/Watson have 4 — while
+  // rejecting all-generic fabrications ("Case report", "Original research
+  // article" both have 0 distinctive tokens, so they cap at partial_match).
+  const enoughTitleTokens = c.distinctiveMatchedTokens >= 2;
   if (enoughTitleTokens && c.titleContainment >= 0.7 && c.surnameHit && yearOk) return "verified";
   // Subtitle-drop tolerance: citations routinely omit a candidate's post-colon
   // subtitle, which drags titleContainment below 0.7 even for faithful refs
