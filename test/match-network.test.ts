@@ -44,6 +44,17 @@ test("a fabricated reference whose nearest Crossref guess is a real paper => not
   expect(r.openalexMatch).toBeNull();
 });
 
+test("a not_found ref does NOT leak the rejected candidate's title or match", async () => {
+  // The nearest Crossref guess is a real paper, but the ref does not match it.
+  // The result must not surface that paper's title/match, or the CLI would
+  // headline a fabricated reference with a legitimate paper's title.
+  route((u) => (u.includes("crossref") ? { message: { items: [watsonItem] } } : {}));
+  const r = await checkFreeTextRef("Phantom A. Quantum entanglement of bibliographic ghosts. J Imaginary Studies. 2021;9:1-9.");
+  expect(r.status).toBe("not_found");
+  expect(r.title).toBe("");
+  expect(r.crossrefMatch).toBeNull();
+});
+
 test("no Crossref candidates => not_found", async () => {
   route((u) => (u.includes("crossref") ? { message: { items: [] } } : {}));
   const r = await checkFreeTextRef("Anything at all 2020");

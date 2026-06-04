@@ -61,3 +61,33 @@ test("verdictFor: at the 0.7 title boundary without a year => partial_match", ()
 test("verdictFor: just below 0.45 => not_found", () => {
   expect(verdictFor({ titleContainment: 0.44, surnameHit: true, yearHit: true }, true)).toBe("not_found");
 });
+
+test("computeContainment+verdictFor: faithful subtitle-dropping citation verifies", () => {
+  // Crossref's canonical title carries a post-colon subtitle the citation drops;
+  // full-title containment lands ~0.67. Surname + year corroborate => verified.
+  const watsonCanonical: CrossrefWork = {
+    DOI: "10.1038/171737a0",
+    title: ["Molecular Structure of Nucleic Acids: A Structure for Deoxyribose Nucleic Acid"],
+    author: [{ family: "Watson" }, { family: "Crick" }],
+    published: { "date-parts": [[1953]] },
+  };
+  const raw = "Watson JD, Crick FHC. Molecular structure of nucleic acids. Nature. 1953;171:737-738.";
+  const c = computeContainment(raw, watsonCanonical);
+  expect(c.titleContainment).toBeLessThan(0.7); // below the high bar
+  expect(c.titleContainment).toBeGreaterThanOrEqual(0.5);
+  expect(c.surnameHit).toBe(true);
+  expect(c.yearHit).toBe(true);
+  expect(verdictFor(c, true)).toBe("verified");
+});
+
+test("verdictFor: subtitle tolerance requires a POSITIVE year hit, not just absence", () => {
+  // Year mismatch (yearHit false, candidate has a year) must stay partial,
+  // even with strong surname — a wrong year is real signal, not a subtitle artifact.
+  expect(verdictFor({ titleContainment: 0.6, surnameHit: true, yearHit: false }, true)).toBe("partial_match");
+});
+
+test("verdictFor: subtitle tolerance does NOT verify on title overlap alone (generic-main-title guard)", () => {
+  // Guards against sliding toward pre-colon-only scoring: a fabricated ref that
+  // reuses a generic main title scores low full-title containment and must reject.
+  expect(verdictFor({ titleContainment: 0.14, surnameHit: true, yearHit: true }, true)).toBe("not_found");
+});

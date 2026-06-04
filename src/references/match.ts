@@ -58,6 +58,12 @@ export function computeContainment(raw: string, candidate: crossref.CrossrefWork
 export function verdictFor(c: Containment, candidateHasYear: boolean): CheckVerdict {
   const yearOk = c.yearHit || !candidateHasYear;
   if (c.titleContainment >= 0.7 && c.surnameHit && yearOk) return "verified";
+  // Subtitle-drop tolerance: citations routinely omit a candidate's post-colon
+  // subtitle, which drags titleContainment below 0.7 even for faithful refs
+  // (e.g. Watson 1953 lands at ~0.67). Accept a lower bar ONLY when BOTH the
+  // surname AND an explicit year hit independently corroborate — that double
+  // signal is what keeps a fabricated ref's weak title overlap from verifying.
+  if (c.titleContainment >= 0.5 && c.surnameHit && c.yearHit) return "verified";
   if (c.titleContainment >= 0.45) return "partial_match";
   return "not_found";
 }
@@ -103,15 +109,20 @@ export async function checkFreeTextRef(raw: string): Promise<CitationCheckResult
     yearMatch: cont.yearHit,
   };
 
-  // A rejected best-guess is not the user's reference — do not enrich it.
+  // A rejected best-guess is not the user's reference — do not enrich it, and
+  // do not surface the rejected paper's title/match (the CLI would otherwise
+  // headline a fabricated ref with a real paper's title). Show only sourceRef.
   if (result.status === "not_found") {
+    result.title = "";
+    result.crossrefMatch = null;
     result.warnings.push("Closest Crossref record does not match this reference — it may be fabricated.");
     return result;
   }
 
   if (result.status === "partial_match") {
-    // verdictFor returns partial_match only for 0.45 <= titleContainment < 0.7,
-    // so the title always partially matches here.
+    // Reached when containment cleared 0.45 but the verified bar (high title
+    // overlap, or moderate overlap with surname+year) was not met — so the
+    // title genuinely only partially matches the closest record.
     result.warnings.push("Reference text only partially matches the closest Crossref record.");
     if (!cont.yearHit && candidateHasYear) {
       result.warnings.push("Publication year not found in the reference text.");
