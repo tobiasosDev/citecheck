@@ -55,10 +55,16 @@ export function segmentReferences(block: string): string[] {
   // wrapped entry into per-line fragments. Dedenting uniformly preserves the
   // hanging-indent signal (continuation lines stay indented RELATIVE to the
   // flush-left entry starts).
+  // Use a reduce (not Math.min(...spread)): spreading a large array passes every
+  // element as a separate function argument, which throws RangeError ("Maximum
+  // call stack size exceeded") on engines like V8 once the count exceeds the
+  // argument limit (~125k). A heading-less document with that many non-blank,
+  // non-numbered, single-spaced lines reaches this path under the existing size
+  // guards, so the spread would crash segmentation before document.ts can refuse.
   const commonIndent =
     nonBlank.length === 0
       ? 0
-      : Math.min(...nonBlank.map((l) => (l.match(/^[ \t]*/)?.[0].length ?? 0)));
+      : nonBlank.reduce((m, l) => Math.min(m, l.match(/^[ \t]*/)?.[0].length ?? 0), Infinity);
   const dedented = nonBlank.map((l) => l.slice(commonIndent));
   const entries: string[] = [];
   let prevOpen = false;

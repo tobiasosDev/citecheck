@@ -106,3 +106,15 @@ test("fallback: one line = one reference", () => {
 test("empty block => no references", () => {
   expect(segmentReferences("   \n  ").length).toBe(0);
 });
+
+test("very large heading-less block (path 3) does not crash the call stack", () => {
+  // A heading-less document with very many non-blank, non-numbered, single-spaced
+  // lines reaches path 3 (un-numbered hanging-indent), where the common indent is
+  // computed. The previous Math.min(...nonBlank.map(...)) spread threw
+  // "RangeError: Maximum call stack size exceeded" once the argument count exceeded
+  // the engine limit — ~125k on V8 (Node, the shipped target) and ~1M on JSC (Bun,
+  // the test runner). 1.5M lines crosses BOTH thresholds, so this test genuinely
+  // throws on the old spread under `bun test` (verified) as well as under Node.
+  const block = Array.from({ length: 1_500_000 }, () => "Smith J. Title. Journal. 2020").join("\n");
+  expect(() => segmentReferences(block)).not.toThrow();
+});

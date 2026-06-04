@@ -34,6 +34,27 @@ test("a faithful reference verifies", async () => {
   expect(r.journalStatus).toBe("not_listed");
 });
 
+test("multi-candidate Crossref response: only candidates[0] is inspected (true match not first => not_found)", async () => {
+  // Crossref is queried with rows=5, but checkFreeTextRef inspects candidates[0]
+  // only. This pins that candidates[0]-only design: a faithful Watson reference
+  // whose true match is the SECOND returned item resolves to not_found because
+  // only the first (unrelated) candidate is scored. Asserting not_found here is
+  // consistent with the anti-inversion invariant — the checker never scans past
+  // the best guess to "find" a match for a reference.
+  const unrelated = {
+    DOI: "10.1/u",
+    title: ["An unrelated treatise on widgets"],
+    author: [{ family: "Nobody" }],
+    published: { "date-parts": [[1999]] },
+  };
+  route((u) => (u.includes("crossref") ? { message: { items: [unrelated, watsonItem] } } : {}));
+  const r = await checkFreeTextRef("Watson JD, Crick FHC. Molecular structure of nucleic acids. Nature. 1953;171:737-738.");
+  expect(r.status).toBe("not_found");
+  // The first (scored) candidate is the unrelated one; its title/match must not leak.
+  expect(r.title).toBe("");
+  expect(r.crossrefMatch).toBeNull();
+});
+
 test("a fabricated reference whose nearest Crossref guess is a real paper => not_found", async () => {
   route((u) => {
     if (u.includes("crossref")) return { message: { items: [watsonItem] } };

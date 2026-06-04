@@ -27,21 +27,37 @@ test("computeContainment: a fabricated reference does NOT contain the candidate'
 
 test("verdictFor: high containment + surname + year => verified", () => {
   expect(
-    verdictFor({ titleContainment: 1, matchedTitleTokens: 4, surnameHit: true, yearHit: true }, true),
+    verdictFor({ titleContainment: 1, matchedTitleTokens: 4, titleTokenCount: 4, surnameHit: true, yearHit: true }, true),
   ).toBe("verified");
 });
 
 test("verdictFor: strong title but missing surname => partial_match", () => {
-  expect(verdictFor({ titleContainment: 0.9, surnameHit: false, yearHit: true }, true)).toBe("partial_match");
+  // matchedTitleTokens: 4 clears the single-token floor so the input actually
+  // reaches the verified branches; surnameHit: false is then the ONLY blocker —
+  // this is what makes the test exercise the surname guard rather than passing
+  // because the (silently omitted) title-token floor was not met.
+  expect(
+    verdictFor({ titleContainment: 0.9, matchedTitleTokens: 4, titleTokenCount: 4, surnameHit: false, yearHit: true }, true),
+  ).toBe("partial_match");
+});
+
+test("verdictFor: strong title WITH surname => verified (surname guard, positive side)", () => {
+  // Pairs the negative case above: the same strong-title input verifies once the
+  // surname hits, pinning the surname guard from both sides.
+  expect(
+    verdictFor({ titleContainment: 0.9, matchedTitleTokens: 4, titleTokenCount: 4, surnameHit: true, yearHit: true }, true),
+  ).toBe("verified");
 });
 
 test("verdictFor: low containment => not_found (anti-inversion guard)", () => {
-  expect(verdictFor({ titleContainment: 0.1, surnameHit: false, yearHit: false }, true)).toBe("not_found");
+  expect(
+    verdictFor({ titleContainment: 0.1, matchedTitleTokens: 0, titleTokenCount: 4, surnameHit: false, yearHit: false }, true),
+  ).toBe("not_found");
 });
 
 test("verdictFor: candidate without a year does not require a year hit", () => {
   expect(
-    verdictFor({ titleContainment: 0.8, matchedTitleTokens: 4, surnameHit: true, yearHit: false }, false),
+    verdictFor({ titleContainment: 0.8, matchedTitleTokens: 4, titleTokenCount: 4, surnameHit: true, yearHit: false }, false),
   ).toBe("verified");
 });
 
@@ -59,11 +75,15 @@ test("computeContainment: matches a compound (multi-word) surname", () => {
 });
 
 test("verdictFor: at the 0.7 title boundary without a year => partial_match", () => {
-  expect(verdictFor({ titleContainment: 0.7, surnameHit: true, yearHit: false }, true)).toBe("partial_match");
+  expect(
+    verdictFor({ titleContainment: 0.7, matchedTitleTokens: 4, titleTokenCount: 4, surnameHit: true, yearHit: false }, true),
+  ).toBe("partial_match");
 });
 
 test("verdictFor: just below 0.45 => not_found", () => {
-  expect(verdictFor({ titleContainment: 0.44, surnameHit: true, yearHit: true }, true)).toBe("not_found");
+  expect(
+    verdictFor({ titleContainment: 0.44, matchedTitleTokens: 2, titleTokenCount: 4, surnameHit: true, yearHit: true }, true),
+  ).toBe("not_found");
 });
 
 test("computeContainment+verdictFor: faithful subtitle-dropping citation verifies", () => {
@@ -87,13 +107,17 @@ test("computeContainment+verdictFor: faithful subtitle-dropping citation verifie
 test("verdictFor: subtitle tolerance requires a POSITIVE year hit, not just absence", () => {
   // Year mismatch (yearHit false, candidate has a year) must stay partial,
   // even with strong surname — a wrong year is real signal, not a subtitle artifact.
-  expect(verdictFor({ titleContainment: 0.6, surnameHit: true, yearHit: false }, true)).toBe("partial_match");
+  expect(
+    verdictFor({ titleContainment: 0.6, matchedTitleTokens: 4, titleTokenCount: 4, surnameHit: true, yearHit: false }, true),
+  ).toBe("partial_match");
 });
 
 test("verdictFor: subtitle tolerance does NOT verify on title overlap alone (generic-main-title guard)", () => {
   // Guards against sliding toward pre-colon-only scoring: a fabricated ref that
   // reuses a generic main title scores low full-title containment and must reject.
-  expect(verdictFor({ titleContainment: 0.14, surnameHit: true, yearHit: true }, true)).toBe("not_found");
+  expect(
+    verdictFor({ titleContainment: 0.14, matchedTitleTokens: 1, titleTokenCount: 7, surnameHit: true, yearHit: true }, true),
+  ).toBe("not_found");
 });
 
 test("computeContainment: a pure-digit title token must not be auto-satisfied by the ref's year", () => {

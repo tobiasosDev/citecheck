@@ -14,9 +14,9 @@ export interface Containment {
   /** Fraction of the candidate's title content-words present in the raw reference. */
   titleContainment: number;
   /** Absolute count of candidate title content-words present in the raw reference. */
-  matchedTitleTokens?: number;
+  matchedTitleTokens: number;
   /** Total count of candidate title content-words (after stopword/digit filtering). */
-  titleTokenCount?: number;
+  titleTokenCount: number;
   /** Candidate's first-author surname present in the raw reference. */
   surnameHit: boolean;
   /** Candidate's publication year present in the raw reference. */
@@ -81,10 +81,9 @@ export function verdictFor(c: Containment, candidateHasYear: boolean): CheckVerd
   // a colliding surname + year would clear ANY containment threshold. Requiring
   // at least two matched title content-words makes the title carry real
   // identifying signal before surname+year can corroborate it to "verified".
-  // (When the field is absent, default to 0 so the floor is never silently
-  // bypassed.) A faithful single-content-word title correctly drops to
-  // partial_match — the conservative outcome for a fabrication-catcher.
-  const enoughTitleTokens = (c.matchedTitleTokens ?? 0) >= 2;
+  // A faithful single-content-word title correctly drops to partial_match — the
+  // conservative outcome for a fabrication-catcher.
+  const enoughTitleTokens = c.matchedTitleTokens >= 2;
   if (enoughTitleTokens && c.titleContainment >= 0.7 && c.surnameHit && yearOk) return "verified";
   // Subtitle-drop tolerance: citations routinely omit a candidate's post-colon
   // subtitle, which drags titleContainment below 0.7 even for faithful refs
@@ -148,7 +147,7 @@ export async function checkFreeTextRef(raw: string): Promise<CitationCheckResult
     // — e.g. a script the normalizer cannot segment — NOT evidence of
     // fabrication, so asserting "may be fabricated" would falsely accuse a real
     // non-English citation.
-    if ((cont.titleTokenCount ?? 0) > 0) {
+    if (cont.titleTokenCount > 0) {
       result.warnings.push("Closest Crossref record does not match this reference — it may be fabricated.");
     } else {
       result.warnings.push("Could not verify this reference automatically — please check it manually.");
