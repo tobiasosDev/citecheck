@@ -1,0 +1,21 @@
+docs/superpowers/specs/2026-06-04-document-upload-design.md
+  s_e6decd44838371::t_5ca5be05fac446 1-295
+.gitignore
+  s_e6decd44838371::t_5a4e23203ba147 6
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "0f2a96d08d33331559cda985b7e09ab931739a58",
+  "prompts": {},
+  "sessions": {
+    "s_e6decd44838371": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fec64bcb-6419-43a4-9a9f-2d3b982ddc4b",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Tobias Lüscher <17859972+tobiasosDev@users.noreply.github.com>"
+    }
+  }
+}
