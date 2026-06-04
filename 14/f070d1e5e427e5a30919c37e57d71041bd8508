@@ -1,0 +1,34 @@
+test/match-network.test.ts
+  s_e6decd44838371::t_c601935eedd9db 136-155
+test/match.test.ts
+  s_e6decd44838371::t_abfa5a2597584d 30,48,85,119,175,181
+  s_e6decd44838371::t_1bde04cddac427 323-430
+  s_e6decd44838371::t_a5d1b3fd92480c 60,79,111
+  s_e6decd44838371::t_d8de04d4af2a8a 54
+  s_e6decd44838371::t_480569532b43b5 40
+test/segment.test.ts
+  s_e6decd44838371::t_8ffe447eb0a033 59-65,67,69,72-75
+src/references/segment.ts
+  s_e6decd44838371::t_c301d12460ecbc 40-47
+  s_e6decd44838371::t_d4c1457b60566a 71
+src/references/match.ts
+  s_e6decd44838371::t_1bacc9ce5b9af9 120-135
+  s_e6decd44838371::t_551e4c4553495f 24-35
+  s_e6decd44838371::t_bba82d56056e7a 71-77,87,89-101,109
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "14f070d1e5e427e5a30919c37e57d71041bd8508",
+  "prompts": {},
+  "sessions": {
+    "s_e6decd44838371": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fec64bcb-6419-43a4-9a9f-2d3b982ddc4b",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Tobias Lüscher <17859972+tobiasosDev@users.noreply.github.com>"
+    }
+  }
+}
