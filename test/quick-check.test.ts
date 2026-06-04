@@ -12,6 +12,19 @@ test("normalizeTitle lowercases and strips punctuation", () => {
   expect(normalizeTitle(undefined)).toBe("");
 });
 
+test("normalizeTitle folds Latin diacritics (Müller -> muller, Körper -> korper)", () => {
+  expect(normalizeTitle("Müller")).toBe("muller");
+  expect(normalizeTitle("Körper")).toBe("korper");
+});
+
+test("normalizeTitle preserves Devanagari combining vowel marks (non-Latin marks not stripped)", () => {
+  // "की दुनिया" contains U+0940 (DEVANAGARI VOWEL SIGN II) — a combining mark
+  // that is semantically part of the word. After normalization it must still
+  // contain a \p{M} character (i.e. must not be stripped to bare consonants).
+  const result = normalizeTitle("की दुनिया");
+  expect(/\p{M}/u.test(result)).toBe(true);
+});
+
 test("jaccardSimilarity: identical = 1, disjoint = 0", () => {
   expect(jaccardSimilarity("a b c", "a b c")).toBe(1);
   expect(jaccardSimilarity("a b c", "x y z")).toBe(0);

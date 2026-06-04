@@ -75,6 +75,13 @@ test("stops at a Markdown ATX stop heading '## Appendix'", () => {
   expect(s.text).not.toContain("appendix prose");
 });
 
+test("matches a bold + numbered Markdown heading '**6. References**'", () => {
+  const doc = ["body", "**6. References**", "[1] X"].join("\n");
+  const s = locateBibliography(doc);
+  expect(s.sectionFound).toBe(true);
+  expect(s.text).toContain("[1] X");
+});
+
 test("no heading => whole document, low confidence", () => {
   const doc = "just some text with no bibliography heading at all";
   const s = locateBibliography(doc);

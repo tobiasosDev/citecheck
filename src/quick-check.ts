@@ -52,7 +52,12 @@ export function normalizeTitle(t: string | undefined): string {
   return t
     .normalize("NFKD")
     .toLowerCase()
-    .replace(/[^\p{L}\p{N}\s]/gu, "")
+    // Fold Latin/general diacritics (Combining Diacritical Marks block U+0300–U+036F
+    // that NFKD split off) so "Müller" -> "muller". Targeted range, NOT a blanket
+    // \p{M} strip, so combining marks that are semantic letters in their script
+    // (Devanagari/Thai vowel signs, Arabic harakat) are preserved, not corrupted.
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/[^\p{L}\p{N}\p{M}\s]/gu, "")  // keep letters, numbers, remaining marks; drop punctuation/symbols
     .replace(/\s+/g, " ")
     .trim();
 }

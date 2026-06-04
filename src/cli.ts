@@ -41,7 +41,7 @@ OPTIONS
   -v, --version     Show the version.
 
 EXIT CODE
-  0  every reference verified (and nothing retracted)
+  0  no problems found (every reference verified, or only partial matches)
   1  at least one reference is not found, suspicious, or retracted
   2  usage / read error
   (references citecheck couldn't reach Crossref for show as "check failed"

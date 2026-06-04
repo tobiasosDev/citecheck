@@ -1316,7 +1316,7 @@ async function runDocument(args: Args): Promise<number> {
 
 In the `HELP` string, change the `<file>` description and add a line so documents are documented:
 
-```
+```text
   <file>   A .bib / .bibtex, .ris, or CSL-JSON (.json) bibliography export,
            OR a document to extract references from: .docx, .txt, .md.
            Pass "-" to read a bibliography export from stdin (auto-detects format).
