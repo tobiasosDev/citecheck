@@ -26,7 +26,9 @@ test("computeContainment: a fabricated reference does NOT contain the candidate'
 });
 
 test("verdictFor: high containment + surname + year => verified", () => {
-  expect(verdictFor({ titleContainment: 1, surnameHit: true, yearHit: true }, true)).toBe("verified");
+  expect(
+    verdictFor({ titleContainment: 1, matchedTitleTokens: 4, surnameHit: true, yearHit: true }, true),
+  ).toBe("verified");
 });
 
 test("verdictFor: strong title but missing surname => partial_match", () => {
@@ -38,7 +40,9 @@ test("verdictFor: low containment => not_found (anti-inversion guard)", () => {
 });
 
 test("verdictFor: candidate without a year does not require a year hit", () => {
-  expect(verdictFor({ titleContainment: 0.8, surnameHit: true, yearHit: false }, false)).toBe("verified");
+  expect(
+    verdictFor({ titleContainment: 0.8, matchedTitleTokens: 4, surnameHit: true, yearHit: false }, false),
+  ).toBe("verified");
 });
 
 test("computeContainment: matches a compound (multi-word) surname", () => {
@@ -127,7 +131,48 @@ test("computeContainment: a digit-bearing real title keeps its alphabetic identi
   };
   const faithful = computeContainment("Watson JD. Trial. Lancet. 2020;1:1-2.", trial);
   expect(faithful.titleContainment).toBe(1); // {trial} fully present
+  expect(faithful.matchedTitleTokens).toBe(1); // only one content token matched
   expect(faithful.surnameHit).toBe(true);
   expect(faithful.yearHit).toBe(true);
-  expect(verdictFor(faithful, true)).toBe("verified");
+  // Deliberate conservative outcome: a one-content-word title cannot auto-verify
+  // on title+surname+year alone (see the single-token floor in verdictFor), so a
+  // legitimate single-word-title paper drops to partial_match. The recall cost is
+  // accepted as the correct trade for a fabrication-catcher.
+  expect(verdictFor(faithful, true)).toBe("partial_match");
+});
+
+test("verdictFor: a one-content-word title cannot auto-verify (single-token floor)", () => {
+  // Anti-inversion regression: Crossref's abundant short-title notices
+  // ("Editorial", "Preface", "An Obituary", …) saturate titleContainment to 1.0
+  // on a single shared word. A fabricated reference that reuses that one generic
+  // word plus a colliding surname + year must NOT earn a green checkmark — it
+  // caps at partial_match because only one title content-token matched.
+  expect(
+    verdictFor({ titleContainment: 1, matchedTitleTokens: 1, titleTokenCount: 1, surnameHit: true, yearHit: true }, true),
+  ).toBe("partial_match");
+  // The 2-content-word / 0.5-branch variant is also gated: one of two tokens
+  // matched (e.g. candidate "Cancer genomics", ref shares only "cancer") stays
+  // below the floor and must not verify on surname+year either.
+  expect(
+    verdictFor({ titleContainment: 0.5, matchedTitleTokens: 1, titleTokenCount: 2, surnameHit: true, yearHit: true }, true),
+  ).toBe("partial_match");
+});
+
+test("computeContainment+verdictFor: fabricated single-word-title ref resolves to partial_match end-to-end", () => {
+  // A real Crossref short-title notice (one content token "obituary") shares only
+  // a common surname + year + that one generic word with a fabricated reference.
+  // The title carries no identifying signal, so it must cap at partial_match.
+  const obituary: CrossrefWork = {
+    DOI: "10.1/o",
+    title: ["An Obituary"],
+    author: [{ family: "Pino" }],
+    published: { "date-parts": [[2026]] },
+  };
+  const fabricated = "Pino G. An obituary for a fictional theorem. Ghost Mathematics Quarterly. 2026.";
+  const c = computeContainment(fabricated, obituary);
+  expect(c.titleContainment).toBe(1); // {obituary} fully present — saturated metric
+  expect(c.matchedTitleTokens).toBe(1); // …but only one content token
+  expect(c.surnameHit).toBe(true);
+  expect(c.yearHit).toBe(true);
+  expect(verdictFor(c, true)).toBe("partial_match");
 });

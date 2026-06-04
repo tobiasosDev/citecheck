@@ -13,6 +13,10 @@ const STOPWORDS = new Set(
 export interface Containment {
   /** Fraction of the candidate's title content-words present in the raw reference. */
   titleContainment: number;
+  /** Absolute count of candidate title content-words present in the raw reference. */
+  matchedTitleTokens?: number;
+  /** Total count of candidate title content-words (after stopword/digit filtering). */
+  titleTokenCount?: number;
   /** Candidate's first-author surname present in the raw reference. */
   surnameHit: boolean;
   /** Candidate's publication year present in the raw reference. */
@@ -53,6 +57,8 @@ export function computeContainment(raw: string, candidate: crossref.CrossrefWork
 
   return {
     titleContainment: Math.round(titleContainment * 100) / 100,
+    matchedTitleTokens: hit,
+    titleTokenCount: titleTokens.length,
     surnameHit,
     yearHit,
   };
@@ -65,13 +71,24 @@ export function computeContainment(raw: string, candidate: crossref.CrossrefWork
  */
 export function verdictFor(c: Containment, candidateHasYear: boolean): CheckVerdict {
   const yearOk = c.yearHit || !candidateHasYear;
-  if (c.titleContainment >= 0.7 && c.surnameHit && yearOk) return "verified";
+  // Absolute floor on matched title content-words. A single shared word
+  // saturates titleContainment to 1.0 when the candidate's title has only one
+  // content token (e.g. Crossref's abundant "Editorial", "Preface", "An
+  // Obituary" notices) — so a fabricated ref reusing that one generic word plus
+  // a colliding surname + year would clear ANY containment threshold. Requiring
+  // at least two matched title content-words makes the title carry real
+  // identifying signal before surname+year can corroborate it to "verified".
+  // (When the field is absent, default to 0 so the floor is never silently
+  // bypassed.) A faithful single-content-word title correctly drops to
+  // partial_match — the conservative outcome for a fabrication-catcher.
+  const enoughTitleTokens = (c.matchedTitleTokens ?? 0) >= 2;
+  if (enoughTitleTokens && c.titleContainment >= 0.7 && c.surnameHit && yearOk) return "verified";
   // Subtitle-drop tolerance: citations routinely omit a candidate's post-colon
   // subtitle, which drags titleContainment below 0.7 even for faithful refs
   // (e.g. Watson 1953 lands at ~0.67). Accept a lower bar ONLY when BOTH the
   // surname AND an explicit year hit independently corroborate — that double
   // signal is what keeps a fabricated ref's weak title overlap from verifying.
-  if (c.titleContainment >= 0.5 && c.surnameHit && c.yearHit) return "verified";
+  if (enoughTitleTokens && c.titleContainment >= 0.5 && c.surnameHit && c.yearHit) return "verified";
   if (c.titleContainment >= 0.45) return "partial_match";
   return "not_found";
 }
