@@ -96,6 +96,31 @@ pre-submission script:
 | `1` | at least one reference is **not found**, **suspicious**, or **retracted** |
 | `2` | usage or file-read error |
 
+## Check a whole document (no .bib needed)
+
+Don't have a reference manager export? Point citecheck at the document itself:
+
+```console
+$ npx citecheck thesis.docx
+  Detected 24 references in the bibliography — verify this matches your paper.
+  Only the reference text is sent to Crossref/OpenAlex/DOAJ — your document is never uploaded or stored.
+
+  ✓  verified     #1   Watson & Crick (1953) Molecular Structure of Nucleic Acids…
+  ✗  not found    #12  Quantum Entanglement of Bibliographic Phantoms…   ← likely fabricated
+  ⚠  retracted    #18  Wakefield et al. (1998) …
+```
+
+Supported formats: **`.docx`**, **`.txt`**, **`.md`** (PDF and LaTeX are planned). citecheck locates the
+bibliography section (English and German headings), splits it into individual references, and runs the same
+existence check used for `.bib`/`.ris`/CSL-JSON. It always prints the **detected count** so you can confirm it
+matched your bibliography — segmentation of messy formatting is best-effort.
+
+### Privacy
+
+Text extraction, section location, and segmentation all happen **locally**. Only each **reference string** is
+sent to the public scholarly APIs (Crossref, OpenAlex, DOAJ). Your document — often unpublished work — is
+**never uploaded and never stored**.
+
 ## What the verdicts mean
 
 | Verdict | Meaning |
