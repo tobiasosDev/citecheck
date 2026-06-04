@@ -28,3 +28,24 @@ test("docxIngester extracts raw text via mammoth", async () => {
   const out = await docxIngester.extractText(new Uint8Array([0x50, 0x4b, 0x03, 0x04]));
   expect(out).toBe("Hello from docx");
 });
+
+import { extractDocumentText, formatOf } from "../src/ingest/index.js";
+
+test("formatOf maps extensions", () => {
+  expect(formatOf("a.docx")).toBe("docx");
+  expect(formatOf("a.md")).toBe("md");
+  expect(formatOf("a.markdown")).toBe("md");
+  expect(formatOf("a.txt")).toBe("txt");
+  expect(formatOf("a.pdf")).toBeNull();
+});
+
+test("extractDocumentText routes a .txt through the text ingester", async () => {
+  const bytes = new TextEncoder().encode("hello doc");
+  expect(await extractDocumentText({ bytes, filename: "x.txt" })).toBe("hello doc");
+});
+
+test("extractDocumentText throws on an unsupported format", async () => {
+  await expect(
+    extractDocumentText({ bytes: new Uint8Array(), filename: "x.pdf" }),
+  ).rejects.toThrow(/unsupported/i);
+});
