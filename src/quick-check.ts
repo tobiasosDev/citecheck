@@ -29,6 +29,8 @@ export interface CitationCheckResult {
   journalStatus: DoajStatus;
   retracted: boolean;
   warnings: string[];
+  /** Set on the document/free-text path: the raw reference string this verdict came from. */
+  sourceRef?: string;
 }
 
 export interface QuickCheckResult {
