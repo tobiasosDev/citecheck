@@ -69,6 +69,35 @@ test("un-numbered wrap: a first line ending mid-clause folds the next line in", 
   expect(refs[0]).toBe("Jones, P. (2018). The very long title that spills onto the next line. Nature, 555, 1-10.");
 });
 
+test("numbered list: prose before the first marker is discarded, not made an entry", () => {
+  // A lead-in line precedes the first [1] marker. It must not become a phantom
+  // reference (which would be fired at Crossref and resolve not_found).
+  const block = [
+    "The following references were consulted:",
+    "[1] Watson JD. Molecular structure. Nature. 1953.",
+    "[2] Smith J. Deep learning. 2021.",
+  ].join("\n");
+  const refs = segmentReferences(block);
+  expect(refs.length).toBe(2);
+  expect(refs[0]).toContain("Watson");
+  expect(refs.some((r) => /following references were consulted/i.test(r))).toBe(false);
+});
+
+test("all-indented block: a uniformly indented entry that wraps stays whole", () => {
+  // Every physical line is indented (a Word/PDF export artifact). Without
+  // dedenting, the whole block collapses to one entry, fails the >= 2 guard,
+  // and falls through to one-line-per-reference — shattering the wrapped entry.
+  const block = [
+    "    Smith, J. (2020). A short title.",
+    "        Journal of Widget Science, 12(3), 45-67.",
+    "    García, M. (2019). Another work. Science, 99, 22-30.",
+  ].join("\n");
+  const refs = segmentReferences(block);
+  expect(refs.length).toBe(2);
+  expect(refs[0]).toBe("Smith, J. (2020). A short title. Journal of Widget Science, 12(3), 45-67.");
+  expect(refs[1]).toContain("Another work");
+});
+
 test("fallback: one line = one reference", () => {
   const block = "Ref one on a line.\nRef two on a line.\nRef three.";
   expect(segmentReferences(block).length).toBe(3);

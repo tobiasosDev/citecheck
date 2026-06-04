@@ -158,6 +158,70 @@ test("verdictFor: a one-content-word title cannot auto-verify (single-token floo
   ).toBe("partial_match");
 });
 
+test("computeContainment: an ASCII-transliterated accented surname still hits (Müller cited as Muller)", () => {
+  // Authors routinely cite accented names in diacritic-dropped ASCII form.
+  // NFKD folding on both sides ("Müller" -> "muller", cited "Muller" -> "muller")
+  // must keep surnameHit true and preserve the accented title tokens.
+  const einstein: CrossrefWork = {
+    DOI: "10.1/e",
+    title: ["Zur Elektrodynamik bewegter Körper"],
+    author: [{ family: "Müller" }],
+    published: { "date-parts": [[1905]] },
+  };
+  const citedAscii = "Muller A. Zur Elektrodynamik bewegter Korper. Annalen der Physik. 1905.";
+  const c = computeContainment(citedAscii, einstein);
+  expect(c.surnameHit).toBe(true);
+  expect(c.titleContainment).toBe(1); // "Korper" folds to match "Körper"
+  expect(c.yearHit).toBe(true);
+  expect(verdictFor(c, true)).toBe("verified");
+});
+
+test("computeContainment: a faithful Cyrillic reference verifies (non-Latin script not flagged)", () => {
+  const cyrillic: CrossrefWork = {
+    DOI: "10.1/c",
+    title: ["Молекулярная структура нуклеиновых кислот"],
+    author: [{ family: "Иванов" }],
+    published: { "date-parts": [[1953]] },
+  };
+  const raw = "Иванов И. Молекулярная структура нуклеиновых кислот. Природа. 1953.";
+  const c = computeContainment(raw, cyrillic);
+  expect(c.titleContainment).toBe(1);
+  expect(c.surnameHit).toBe(true);
+  expect(c.yearHit).toBe(true);
+  expect(verdictFor(c, true)).toBe("verified");
+});
+
+test("computeContainment: a faithful CJK reference is partial_match, never 'fabricated'", () => {
+  // CJK titles have no whitespace, so they collapse to a single token: the
+  // metric saturates to 1.0 but only one content token matched, so the
+  // single-token floor caps it at partial_match — the conservative, correct
+  // outcome. The point is it is NOT not_found / "may be fabricated".
+  const cjk: CrossrefWork = {
+    DOI: "10.1/j",
+    title: ["量子纠缠的研究"],
+    author: [{ family: "王" }],
+    published: { "date-parts": [[2020]] },
+  };
+  const raw = "王. 量子纠缠的研究. 物理学报. 2020.";
+  const c = computeContainment(raw, cjk);
+  expect(c.titleContainment).toBe(1);
+  expect(c.surnameHit).toBe(true);
+  expect(verdictFor(c, true)).toBe("partial_match");
+});
+
+test("computeContainment+verdictFor: a fabricated CJK ref still rejects (anti-inversion holds)", () => {
+  const cjk: CrossrefWork = {
+    DOI: "10.1/j",
+    title: ["量子纠缠的研究"],
+    author: [{ family: "王" }],
+    published: { "date-parts": [[2020]] },
+  };
+  const fabricated = "李. 完全不同的论文标题内容. 别的期刊. 2020.";
+  const c = computeContainment(fabricated, cjk);
+  expect(c.titleContainment).toBe(0);
+  expect(verdictFor(c, true)).toBe("not_found");
+});
+
 test("computeContainment+verdictFor: fabricated single-word-title ref resolves to partial_match end-to-end", () => {
   // A real Crossref short-title notice (one content token "obituary") shares only
   // a common surname + year + that one generic word with a fabricated reference.

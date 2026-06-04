@@ -19,11 +19,16 @@ export function segmentReferences(block: string): string[] {
   if (markerLines >= 2) {
     const entries: string[] = [];
     let cur: string[] = [];
+    let seenMarker = false;
     for (const line of lines) {
       if (NUM_MARKER.test(line)) {
         if (cur.length) entries.push(collapse(cur.join(" ")));
         cur = [line.replace(NUM_MARKER, "")];
-      } else if (line.trim()) {
+        seenMarker = true;
+      } else if (seenMarker && line.trim()) {
+        // Only accumulate continuation lines AFTER the first marker. Any prose
+        // before the first marker (e.g. a lead-in like "The following references
+        // were consulted:") is discarded so it never becomes a phantom entry.
         cur.push(line);
       }
     }
@@ -42,9 +47,22 @@ export function segmentReferences(block: string): string[] {
   // rather than splitting off as its own fragment — otherwise every wrapped
   // entry shatters into per-line fragments, each firing a doomed Crossref query.
   const nonBlank = lines.filter((l) => l.trim());
+  // Strip the common leading whitespace shared by EVERY non-blank line. A
+  // Word/PDF export sometimes indents the whole block uniformly; without this,
+  // every line reads as "indented", so each one folds into entry 0 and the
+  // block collapses to a single entry — failing the >= 2 guard and falling
+  // through to path 4 (one physical line = one reference), which shatters any
+  // wrapped entry into per-line fragments. Dedenting uniformly preserves the
+  // hanging-indent signal (continuation lines stay indented RELATIVE to the
+  // flush-left entry starts).
+  const commonIndent =
+    nonBlank.length === 0
+      ? 0
+      : Math.min(...nonBlank.map((l) => (l.match(/^[ \t]*/)?.[0].length ?? 0)));
+  const dedented = nonBlank.map((l) => l.slice(commonIndent));
   const entries: string[] = [];
   let prevOpen = false;
-  for (const line of nonBlank) {
+  for (const line of dedented) {
     const indented = /^\s/.test(line);
     if (entries.length > 0 && (indented || prevOpen)) {
       entries[entries.length - 1] += " " + line;

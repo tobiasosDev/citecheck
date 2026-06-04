@@ -40,6 +40,41 @@ test("stops at a following section heading (Appendix)", () => {
   expect(s.text).not.toContain("appendix prose");
 });
 
+test("matches a Markdown ATX heading '## References'", () => {
+  const doc = ["Intro text", "", "## References", "[1] A", "[2] B"].join("\n");
+  const s = locateBibliography(doc);
+  expect(s.sectionFound).toBe(true);
+  expect(s.confidence).toBe("high");
+  expect(s.heading).toBe("## References");
+  expect(s.text).toContain("[1] A");
+  expect(s.text).not.toContain("Intro text");
+});
+
+test("matches a Markdown ATX heading '# Bibliography'", () => {
+  const doc = ["body prose", "", "# Bibliography", "Smith, J. (2020). A title."].join("\n");
+  const s = locateBibliography(doc);
+  expect(s.sectionFound).toBe(true);
+  expect(s.confidence).toBe("high");
+  expect(s.heading).toBe("# Bibliography");
+  expect(s.text).toContain("Smith");
+});
+
+test("matches a bold Markdown heading '**References**'", () => {
+  const doc = ["body prose", "", "**References**", "Smith, J. (2020). A title."].join("\n");
+  const s = locateBibliography(doc);
+  expect(s.sectionFound).toBe(true);
+  expect(s.confidence).toBe("high");
+  expect(s.heading).toBe("**References**");
+  expect(s.text).toContain("Smith");
+});
+
+test("stops at a Markdown ATX stop heading '## Appendix'", () => {
+  const doc = ["## References", "[1] Real ref", "## Appendix", "raw appendix prose"].join("\n");
+  const s = locateBibliography(doc);
+  expect(s.text).toContain("[1] Real ref");
+  expect(s.text).not.toContain("appendix prose");
+});
+
 test("no heading => whole document, low confidence", () => {
   const doc = "just some text with no bibliography heading at all";
   const s = locateBibliography(doc);

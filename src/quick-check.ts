@@ -40,7 +40,21 @@ export interface QuickCheckResult {
 
 export function normalizeTitle(t: string | undefined): string {
   if (!t) return "";
-  return t.toLowerCase().replace(/[^a-z0-9\s]/g, "").replace(/\s+/g, " ").trim();
+  // NFKD decomposes accented letters into base + combining mark (ü -> u + ̈);
+  // the Unicode-aware class then drops the combining marks (they are \p{M}, not
+  // \p{L}/\p{N}) — folding diacritics for free while KEEPING non-Latin letters
+  // (Cyrillic/Greek/CJK/Arabic). The ASCII-only /[^a-z0-9\s]/ this replaces
+  // stripped every non-Latin character, leaving non-English titles with zero
+  // tokens and wrongly flagged as fabricated. (Diacritic-DROPPED citation forms
+  // like "Muller"/"Korper" now match "Müller"/"Körper"; digraph-EXPANDED forms
+  // like "Mueller"/"Koerper" and non-decomposable letters like ß/Ł/Ø are out of
+  // scope for this fold.)
+  return t
+    .normalize("NFKD")
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}\s]/gu, "")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 export function jaccardSimilarity(a: string, b: string): number {

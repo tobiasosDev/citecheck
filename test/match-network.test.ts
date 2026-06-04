@@ -55,6 +55,18 @@ test("a not_found ref does NOT leak the rejected candidate's title or match", as
   expect(r.crossrefMatch).toBeNull();
 });
 
+test("not_found with a zero-token candidate title suppresses the 'may be fabricated' warning", async () => {
+  // The nearest Crossref guess has a title that yields no extractable tokens
+  // (e.g. all punctuation/digits). That is a tokenizer limitation, not evidence
+  // of fabrication, so the harsh "may be fabricated" claim must be suppressed.
+  const untokenizable = { DOI: "10.1/x", title: ["2020 —"], author: [{ family: "Smith" }], published: { "date-parts": [[2020]] } };
+  route((u) => (u.includes("crossref") ? { message: { items: [untokenizable] } } : {}));
+  const r = await checkFreeTextRef("Smith J. Some reference text. 2020.");
+  expect(r.status).toBe("not_found");
+  expect(r.warnings.some((w) => /may be fabricated/i.test(w))).toBe(false);
+  expect(r.warnings.some((w) => /could not verify this reference automatically/i.test(w))).toBe(true);
+});
+
 test("no Crossref candidates => not_found", async () => {
   route((u) => (u.includes("crossref") ? { message: { items: [] } } : {}));
   const r = await checkFreeTextRef("Anything at all 2020");

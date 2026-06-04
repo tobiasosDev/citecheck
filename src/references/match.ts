@@ -45,10 +45,13 @@ export function computeContainment(raw: string, candidate: crossref.CrossrefWork
   for (const t of titleTokens) if (rawTokens.has(t)) hit++;
   const titleContainment = titleTokens.length === 0 ? 0 : hit / titleTokens.length;
 
-  const surnameParts = (candidate.author?.[0]?.family ?? "")
-    .toLowerCase()
-    .split(/\s+/)
-    .map((p) => p.replace(/[^a-z0-9]/g, ""))
+  // Fold the surname through the SAME normalizer as the raw reference (rawTokens
+  // also comes from normalizeTitle), so a diacritic-dropped citation ("Muller")
+  // matches the candidate's accented form ("Müller"): NFKD folds ü -> u on both
+  // sides. The old [^a-z0-9] strip DELETED accented letters ("Müller" -> "mller")
+  // and broke the match, demoting faithful non-English citations.
+  const surnameParts = normalizeTitle(candidate.author?.[0]?.family ?? "")
+    .split(" ")
     .filter(Boolean);
   const surnameHit = surnameParts.length > 0 && surnameParts.every((p) => rawTokens.has(p));
 
@@ -140,7 +143,16 @@ export async function checkFreeTextRef(raw: string): Promise<CitationCheckResult
   if (result.status === "not_found") {
     result.title = "";
     result.crossrefMatch = null;
-    result.warnings.push("Closest Crossref record does not match this reference — it may be fabricated.");
+    // Suppress the fabrication warning when the candidate title yielded zero
+    // extractable tokens (titleTokenCount === 0). That is a tokenizer limitation
+    // — e.g. a script the normalizer cannot segment — NOT evidence of
+    // fabrication, so asserting "may be fabricated" would falsely accuse a real
+    // non-English citation.
+    if ((cont.titleTokenCount ?? 0) > 0) {
+      result.warnings.push("Closest Crossref record does not match this reference — it may be fabricated.");
+    } else {
+      result.warnings.push("Could not verify this reference automatically — please check it manually.");
+    }
     return result;
   }
 

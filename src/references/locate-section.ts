@@ -17,11 +17,20 @@ const STOP_HEADINGS = new Set([
   "notes", "endnotes", "about the author", "about the authors",
 ]);
 
-/** Lowercased label with any leading section number ("6.", "6)", "6") and trailing punctuation stripped. */
+/**
+ * Lowercased heading label with Markdown markers, any leading section number
+ * ("6.", "6)", "6") and trailing punctuation stripped. Markdown ATX markers
+ * ("## References") and surrounding emphasis ("**References**", "_References_")
+ * are removed first so the dominant Markdown heading styles normalize to the
+ * bare label — ".md" is a first-class supported input format.
+ */
 function headingLabel(line: string): string {
   return line
     .trim()
-    .replace(/^[0-9]+[.)]?\s+/, "")
+    .replace(/^#{1,6}\s*/, "") // Markdown ATX heading marker ("## References")
+    .replace(/^[*_]{1,3}\s*/, "") // leading emphasis ("**References**", "_References_")
+    .replace(/\s*[*_]{1,3}$/, "") // trailing emphasis
+    .replace(/^[0-9]+[.)]?\s+/, "") // "6. References", "## 6. References"
     .replace(/[.:]+$/, "")
     .trim()
     .toLowerCase();
