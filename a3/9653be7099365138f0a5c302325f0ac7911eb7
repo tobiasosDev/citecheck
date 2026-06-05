@@ -1,0 +1,28 @@
+src/references/locate-section.ts
+  s_96980f34974452::t_730ed49e29a822 10-15,19
+package.json
+  s_96980f34974452::t_f71206fa123472 3
+  s_96980f34974452::t_8ff1245204b39e 10-17
+test/locate-section.test.ts
+  s_96980f34974452::t_1b1deaf8f1de58 22-37
+src/extract.ts
+  s_96980f34974452::t_3ad4ad5da84290 1-13
+src/index.ts
+  s_96980f34974452::t_1e733aa72f63ad 14-18
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "a39653be7099365138f0a5c302325f0ac7911eb7",
+  "prompts": {},
+  "sessions": {
+    "s_96980f34974452": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "28cc946c-16fb-4032-bf6e-61f544faea92",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Tobias Lüscher <17859972+tobiasosDev@users.noreply.github.com>"
+    }
+  }
+}
