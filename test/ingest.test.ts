@@ -103,6 +103,16 @@ test("zip-bomb guard rejects ZIP whose total uncompressed size exceeds the cap",
   await expect(docxIngester.extractText(oversized)).rejects.toThrow(/too large/i);
 });
 
+test("zip-bomb guard rejects a ZIP64 EOCD sentinel instead of failing open", async () => {
+  const { docxIngester } = await import("../src/ingest/docx.js");
+  // A single small, in-cap entry, but the EOCD CD-offset field is the ZIP64
+  // sentinel 0xFFFFFFFF — the real central directory lives in a ZIP64 record we
+  // don't parse, so the guard must reject (treat as unbounded), not fail open.
+  const zip = buildMinimalZipCD(1024);
+  new DataView(zip.buffer).setUint32(46 + 16, 0xffffffff, true); // EOCD cdOffset
+  await expect(docxIngester.extractText(zip)).rejects.toThrow(/too large/i);
+});
+
 test("zip-bomb guard fails open on a buffer with no EOCD (4-byte ZIP magic only)", async () => {
   // Stub mammoth so the test doesn't depend on real mammoth behaviour.
   mock.module("mammoth", () => ({

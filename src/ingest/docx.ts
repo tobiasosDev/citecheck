@@ -81,7 +81,18 @@ function rejectIfZipBomb(bytes: Uint8Array): void {
 
     if (entryCount === 0) return; // empty ZIP — fine
 
-    // Step 3: walk central directory entries.
+    // ZIP64 archives keep these legacy EOCD fields as sentinels (entry count
+    // 0xFFFF, CD offset 0xFFFFFFFF) and store the real counts/offset in a ZIP64
+    // EOCD record this parser does not follow. A .docx within the
+    // MAX_INPUT_BYTES compressed cap can never legitimately need ZIP64, so a
+    // sentinel here means ZIP64 (true size unknown to us) or corruption — treat
+    // it as unbounded and reject, rather than failing open and letting mammoth
+    // inflate an archive we never size-checked.
+    if (cdOffset === 0xffffffff || entryCount === 0xffff) {
+      total = Infinity;
+    }
+
+    // Step 3: walk central directory entries (skipped when flagged ZIP64 above).
     const CD_ENTRY_SIG_0 = 0x50;
     const CD_ENTRY_SIG_1 = 0x4b;
     const CD_ENTRY_SIG_2 = 0x01;
@@ -90,7 +101,7 @@ function rejectIfZipBomb(bytes: Uint8Array): void {
     const ZIP64_SENTINEL = 0xffffffff;
 
     let pos = cdOffset;
-    for (let i = 0; i < entryCount; i++) {
+    for (let i = 0; total !== Infinity && i < entryCount; i++) {
       // Verify signature — fail-open if it doesn't match
       if (
         bytes[pos] !== CD_ENTRY_SIG_0 ||
