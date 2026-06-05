@@ -82,6 +82,111 @@ test("matches a bold + numbered Markdown heading '**6. References**'", () => {
   expect(s.text).toContain("[1] X");
 });
 
+test("stops at a German back-matter list after the bibliography (Tabellenverzeichnis)", () => {
+  // Mirrors a real thesis: APA references under "Literaturverzeichnis", then a
+  // list-of-tables. Without the stop heading, "Tabelle 1 …" rows would each
+  // segment into a phantom reference.
+  const doc = [
+    "Literaturverzeichnis",
+    "Alkanani, A. K. (2015). Alterations in Intestinal Microbiota.",
+    "Zimmerman, S. (2025). Specification curve analysis.",
+    "",
+    "Tabellenverzeichnis",
+    "Tabelle 1 - Reifungsphasen des Darmmikrobioms",
+    "Tabelle 2 - Synopse der Kohortenstudien",
+  ].join("\n");
+  const s = locateBibliography(doc);
+  expect(s.heading).toBe("Literaturverzeichnis");
+  expect(s.text).toContain("Alkanani");
+  expect(s.text).toContain("Zimmerman");
+  expect(s.text).not.toContain("Tabellenverzeichnis");
+  expect(s.text).not.toContain("Tabelle 1");
+});
+
+test("stops at an accented Abkürzungsverzeichnis (diacritic-folded match)", () => {
+  const doc = [
+    "Literaturverzeichnis",
+    "Müller, K. (2020). Ein Titel.",
+    "",
+    "Abkürzungsverzeichnis",
+    "SCFA",
+    "T1D",
+  ].join("\n");
+  const s = locateBibliography(doc);
+  expect(s.text).toContain("Müller");
+  expect(s.text).not.toContain("SCFA");
+  expect(s.text).not.toContain("T1D");
+});
+
+test("stops at a Hilfsmittelverzeichnis (AI-tools declaration) so 'Zotero'/'ChatGPT' are not refs", () => {
+  const doc = [
+    "Literaturverzeichnis",
+    "Müller, K. (2020). Ein Titel.",
+    "",
+    "Hilfsmittelverzeichnis",
+    "ChatGPT 5.2",
+    "Zotero",
+  ].join("\n");
+  const s = locateBibliography(doc);
+  expect(s.text).toContain("Müller");
+  expect(s.text).not.toContain("ChatGPT");
+  expect(s.text).not.toContain("Zotero");
+});
+
+test("stops at an English 'List of Figures' after the bibliography", () => {
+  const doc = [
+    "References",
+    "Smith, J. (2020). A real paper.",
+    "",
+    "List of Figures",
+    "Figure 1 - A chart",
+  ].join("\n");
+  const s = locateBibliography(doc);
+  expect(s.text).toContain("Smith");
+  expect(s.text).not.toContain("Figure 1");
+});
+
+test("stops at a German Eidesstattliche Versicherung after the bibliography", () => {
+  const doc = [
+    "Literaturverzeichnis",
+    "Müller, K. (2020). Ein Titel.",
+    "",
+    "Eidesstattliche Versicherung",
+    "Hiermit versichere ich …",
+  ].join("\n");
+  const s = locateBibliography(doc);
+  expect(s.text).toContain("Müller");
+  expect(s.text).not.toContain("Hiermit versichere");
+});
+
+test("stops at a French 'Liste des figures' after the bibliography", () => {
+  const doc = [
+    "Bibliographie",
+    "Dupont, J. (2019). Un article réel.",
+    "",
+    "Liste des figures",
+    "Figure 1 - un schéma",
+  ].join("\n");
+  const s = locateBibliography(doc);
+  expect(s.text).toContain("Dupont");
+  expect(s.text).not.toContain("Figure 1");
+});
+
+test("a standalone bare common word (Index) does NOT truncate a real bibliography", () => {
+  // Guards the false-drop hazard: a reference can hard-wrap so one line equals a
+  // bare common word. Such a word must NOT be a stop heading, or every reference
+  // after it is dropped. Only distinctive phrases/compounds are stop headings.
+  const doc = [
+    "References",
+    "Smith, J. (2020). A paper about the Index of biodiversity. Journal X.",
+    "Index",
+    "Jones, A. (2021). Another real paper. Journal Y.",
+  ].join("\n");
+  const s = locateBibliography(doc);
+  expect(s.text).toContain("Smith");
+  expect(s.text).toContain("Jones"); // not dropped by the standalone "Index" line
+});
+
 test("no heading => whole document, low confidence", () => {
   const doc = "just some text with no bibliography heading at all";
   const s = locateBibliography(doc);
