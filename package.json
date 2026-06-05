@@ -1,13 +1,20 @@
 {
   "name": "citecheck",
-  "version": "1.1.1",
+  "version": "1.2.0",
   "description": "Check whether the references in your .bib / .ris / CSL-JSON bibliography actually exist and haven't been retracted, and see which sources are in DOAJ-listed open-access journals — using Crossref, OpenAlex and DOAJ. No API key, no signup.",
   "type": "module",
   "bin": {
     "citecheck": "dist/cli.js"
   },
   "exports": {
-    ".": "./dist/index.js"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./extract": {
+      "types": "./dist/extract.d.ts",
+      "default": "./dist/extract.js"
+    }
   },
   "types": "./dist/index.d.ts",
   "files": [

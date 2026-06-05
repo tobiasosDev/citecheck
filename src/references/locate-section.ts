@@ -7,9 +7,16 @@ export interface LocatedSection {
   confidence: "high" | "low";
 }
 
+// Keys are diacritic-folded + lowercase (see headingLabel), so French/Spanish/
+// Portuguese accented headings ("Références", "Bibliografía", "Referências")
+// match their folded forms ("references", "bibliografia", "referencias"). The
+// Spanish/Italian/Portuguese keys (referencias/bibliografia/riferimenti) keep
+// this set a SUPERSET of every heading vocabulary used by downstream consumers,
+// so routing extraction through this locator never loses a language.
 const HEADINGS = new Set([
   "references", "reference list", "bibliography", "works cited", "literature cited", "sources",
   "literaturverzeichnis", "quellenverzeichnis", "quellen", "bibliografie", "bibliographie", "literatur",
+  "referencias", "bibliografia", "riferimenti",
 ]);
 
 // Back-matter sections that follow the bibliography in a thesis. The forward

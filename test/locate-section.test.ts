@@ -19,6 +19,22 @@ test("finds a German Literaturverzeichnis heading", () => {
   expect(s.text).toContain("Müller");
 });
 
+test("finds Spanish/Portuguese 'Referencias' / accented 'Bibliografía' headings", () => {
+  const es = ["Cuerpo", "", "Referencias", "García, J. (2020). Título."].join("\n");
+  expect(locateBibliography(es).heading).toBe("Referencias");
+  const accented = ["Cuerpo", "", "Bibliografía", "García, J. (2020). Título."].join("\n");
+  const s = locateBibliography(accented);
+  expect(s.sectionFound).toBe(true);
+  expect(s.text).toContain("García");
+});
+
+test("finds an Italian 'Riferimenti' heading", () => {
+  const doc = ["Corpo", "", "Riferimenti", "Rossi, M. (2021). Titolo."].join("\n");
+  const s = locateBibliography(doc);
+  expect(s.heading).toBe("Riferimenti");
+  expect(s.text).toContain("Rossi");
+});
+
 test("prefers the LAST matching heading", () => {
   const doc = ["see references below", "References", "early false hit", "body", "References", "[1] Real"].join("\n");
   const s = locateBibliography(doc);
