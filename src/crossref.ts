@@ -71,6 +71,20 @@ export async function searchByTitle(title: string, rows = 3): Promise<CrossrefWo
   return body.message?.items ?? [];
 }
 
+/**
+ * Match a full free-text reference string via Crossref's fuzzy bibliographic
+ * search. Unlike `searchByTitle`, it does NOT cap at 200 chars (a whole
+ * reference is longer than a title). Returns matches, `[]` for a definitive
+ * empty result, and THROWS if Crossref was unreachable.
+ */
+export async function searchByBibliographic(reference: string, rows = 5): Promise<CrossrefWork[]> {
+  const q = encodeURIComponent(reference.replace(/\s+/g, " ").trim().slice(0, 500));
+  const res = await crossrefFetch(`${BASE_URL}/works?query.bibliographic=${q}&rows=${rows}`);
+  if (!res.ok) return [];
+  const body = (await res.json()) as { message?: { items?: CrossrefWork[] } };
+  return body.message?.items ?? [];
+}
+
 export function extractYear(work: CrossrefWork): number | undefined {
   return work.published?.["date-parts"]?.[0]?.[0];
 }

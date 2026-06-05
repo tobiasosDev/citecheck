@@ -9,3 +9,5 @@ export { parseRis } from "./ris-parser.js";
 export { parseCslJson } from "./csl-json.js";
 export type { CslItemData, CslName, CslDate } from "./types.js";
 export type { DoajStatus } from "./doaj.js";
+export { checkDocument } from "./document.js";
+export type { CheckDocumentResult, DocumentExtraction } from "./document.js";
