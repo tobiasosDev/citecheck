@@ -1,0 +1,22 @@
+src/ingest/docx.ts
+  s_e6decd44838371::t_705962ed09d7d1 104
+  s_e6decd44838371::t_15787b583068e7 84-95
+test/ingest.test.ts
+  s_e6decd44838371::t_5354495694be60 106-115
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "8e195f4e3ac03b9f30686aaaf64945b92186684e",
+  "prompts": {},
+  "sessions": {
+    "s_e6decd44838371": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fec64bcb-6419-43a4-9a9f-2d3b982ddc4b",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Tobias Lüscher <17859972+tobiasosDev@users.noreply.github.com>"
+    }
+  }
+}
