@@ -1,11 +1,7 @@
 #!/usr/bin/env node
 import { readFile, stat } from "node:fs/promises";
-import { extname } from "node:path";
 import { quickCheck, type CitationCheckResult } from "./quick-check.js";
-import { parseBib } from "./bib-parser.js";
-import { parseRis } from "./ris-parser.js";
-import { parseCslJson } from "./csl-json.js";
-import type { CslItemData } from "./types.js";
+import { detectAndParse } from "./parse-bibliography.js";
 import { VERSION } from "./http.js";
 import { checkDocument, MAX_INPUT_BYTES, tooLargeMessage, type CheckDocumentResult } from "./document.js";
 import { formatOf } from "./ingest/index.js";
@@ -91,19 +87,6 @@ async function readInput(file: string): Promise<string> {
   return readFile(file, "utf8");
 }
 
-function detectAndParse(file: string, text: string): CslItemData[] {
-  const ext = extname(file).toLowerCase();
-  if (ext === ".bib" || ext === ".bibtex") return parseBib(text);
-  if (ext === ".ris") return parseRis(text);
-  if (ext === ".json") return parseCslJson(text);
-
-  // No usable extension (e.g. stdin "-"): sniff the content.
-  const t = text.trimStart();
-  if (t.startsWith("[") || t.startsWith("{")) return parseCslJson(text);
-  if (/^TY {2}- /m.test(t)) return parseRis(text);
-  if (t.startsWith("@")) return parseBib(text);
-  return [];
-}
 
 const VERDICT = {
   verified: { label: "verified", paint: green, sym: "✓" },

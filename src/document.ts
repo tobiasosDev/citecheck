@@ -26,7 +26,7 @@ export interface CheckDocumentResult {
  * Each reference fires a Crossref search plus (on a match) OpenAlex + DOAJ
  * lookups, so an unbounded count is a hang / self-rate-limit / abuse vector.
  */
-const MAX_REFS = 200;
+export const MAX_REFS = 200;
 
 /**
  * Reject inputs whose RAW (on-disk) byte size exceeds this, before any

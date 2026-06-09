@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "citecheck": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "--package=citecheck", "citecheck-mcp"]
+    }
+  }
+}

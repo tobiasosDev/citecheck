@@ -1,10 +1,11 @@
 {
   "name": "citecheck",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "description": "Check whether the references in your .bib / .ris / CSL-JSON bibliography actually exist and haven't been retracted, and see which sources are in DOAJ-listed open-access journals — using Crossref, OpenAlex and DOAJ. No API key, no signup.",
   "type": "module",
   "bin": {
-    "citecheck": "dist/cli.js"
+    "citecheck": "dist/cli.js",
+    "citecheck-mcp": "dist/mcp.js"
   },
   "exports": {
     ".": {
@@ -58,8 +59,10 @@
     "url": "https://github.com/tobiasosDev/citecheck/issues"
   },
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
     "@retorquere/bibtex-parser": "^10.0.0",
-    "mammoth": "^1.12.0"
+    "mammoth": "^1.12.0",
+    "zod": "^3.25.0"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

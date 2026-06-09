@@ -1,0 +1,9 @@
+{
+  "name": "citecheck",
+  "description": "Verify that citations/sources are real, current, and not retracted — via Crossref, OpenAlex and DOAJ. No API key.",
+  "version": "1.3.0",
+  "author": { "name": "Tobias Lüscher" },
+  "homepage": "https://github.com/tobiasosDev/citecheck",
+  "repository": "https://github.com/tobiasosDev/citecheck",
+  "license": "MIT"
+}
