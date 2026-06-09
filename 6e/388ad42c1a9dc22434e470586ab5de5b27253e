@@ -1,0 +1,24 @@
+src/mcp/tools.ts
+  s_d5a0511ead0bc5::t_220b3e9e2999ca 1-69
+test/mcp-tools.test.ts
+  s_d5a0511ead0bc5::t_6ecefe1ca2f86b 7,25,28,30-36,42,48,52,56,68,70-72
+  s_d5a0511ead0bc5::t_477c1f2cb9ed38 2-6,15-18,75,84-92,94-100,102-108,110-129,131-135
+  s_d5a0511ead0bc5::t_3add76ef9b1931 1,8-14,23-24,26-27,37-41,43-44,53,76-83,101
+  s_d5a0511ead0bc5::t_0658dcaed7ed9b 19-22,29,45-47,49-51,54-55,57-67,69,73-74,93,109,130
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "6e388ad42c1a9dc22434e470586ab5de5b27253e",
+  "prompts": {},
+  "sessions": {
+    "s_d5a0511ead0bc5": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "8ae1ce46-f947-4ac8-8feb-1f78a9dc0877",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Tobias Lüscher <17859972+tobiasosDev@users.noreply.github.com>"
+    }
+  }
+}
