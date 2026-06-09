@@ -16,9 +16,9 @@ let stubCheckFreeTextRef: (raw: string) => Promise<CitationCheckResult>;
 let stubQuickCheck: (items: unknown[]) => Promise<QuickCheckResult>;
 let stubCheckDocument: (input: unknown) => Promise<unknown>;
 
-let runVerifyReference: (input: { ref: string; mailto?: string }) => Promise<unknown>;
-let runCheckBibliography: (input: { path?: string; content?: string; format?: string; mailto?: string }) => Promise<unknown>;
-let runCheckDocument: (input: { path: string; mailto?: string }) => Promise<unknown>;
+let runVerifyReference: (input: { ref: string }) => Promise<unknown>;
+let runCheckBibliography: (input: { path?: string; content?: string; format?: string }) => Promise<unknown>;
+let runCheckDocument: (input: { path: string }) => Promise<unknown>;
 
 // Real functions captured in beforeAll; needed to initialise stubs and restore
 // after tests.
@@ -114,6 +114,16 @@ test("runCheckBibliography caps at MAX_REFS and reports the true detected total"
 
 test("runCheckBibliography throws when neither path nor content is given", async () => {
   await expect(runCheckBibliography({})).rejects.toThrow(/path|content/i);
+});
+
+test("runCheckBibliography throws when BOTH path and content are given", async () => {
+  await expect(runCheckBibliography({ path: "x.bib", content: "@article{a, title={T}}" }))
+    .rejects.toThrow(/exactly one/i);
+});
+
+test("runCheckBibliography rejects inline content over the byte cap", async () => {
+  const huge = "x".repeat(10 * 1024 * 1024 + 1); // > MAX_INPUT_BYTES (mocked to 10 MiB above)
+  await expect(runCheckBibliography({ content: huge })).rejects.toThrow(/too large/i);
 });
 
 test("runCheckDocument reads the file and maps the extraction block", async () => {

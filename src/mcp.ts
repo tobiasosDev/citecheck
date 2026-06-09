@@ -39,7 +39,6 @@ server.registerTool(
       "Only the reference string is sent to the public scholarly APIs (Crossref/OpenAlex/DOAJ).",
     inputSchema: {
       ref: z.string().describe("A reference string, DOI, or title to verify."),
-      mailto: z.string().optional().describe("Email for the Crossref/OpenAlex polite pool (faster rate limits)."),
     },
   },
   handler(runVerifyReference),
@@ -53,11 +52,12 @@ server.registerTool(
       "Verify every reference in a .bib / .ris / CSL-JSON bibliography. Provide `path` (a file on disk) OR " +
       "`content` (the file's text). Returns summary counts plus only the problem references; verified-clean " +
       "ones are collapsed to a count. Capped at 200 references.",
+    // Provide exactly one of `path` / `content` — a flat schema can't express
+    // that XOR, so runCheckBibliography enforces it and errors on both/neither.
     inputSchema: {
-      path: z.string().optional().describe("Path to a .bib/.ris/.json file on disk."),
-      content: z.string().optional().describe("Inline bibliography text (alternative to path)."),
+      path: z.string().optional().describe("Path to a .bib/.ris/.json file on disk (use this OR content)."),
+      content: z.string().optional().describe("Inline bibliography text (use this OR path)."),
       format: z.enum(["bib", "ris", "csljson"]).optional().describe("Force the format when passing inline content."),
-      mailto: z.string().optional().describe("Email for the Crossref/OpenAlex polite pool."),
     },
   },
   handler(runCheckBibliography),
@@ -73,7 +73,6 @@ server.registerTool(
       "confirm the detected reference count matches your bibliography — segmentation is best-effort.",
     inputSchema: {
       path: z.string().describe("Path to a .docx/.txt/.md document on disk."),
-      mailto: z.string().optional().describe("Email for the Crossref/OpenAlex polite pool."),
     },
   },
   handler(runCheckDocument),

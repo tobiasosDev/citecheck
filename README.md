@@ -179,6 +179,10 @@ npx -y --package=citecheck citecheck-mcp
 
 (The server bin lives in the `citecheck` package, so `--package=citecheck` is required.)
 
+Set `CITECHECK_MAILTO` in the server's environment to use the Crossref/OpenAlex
+"polite pool" (faster, kinder rate limits) — e.g. via the `env` block of your
+`.mcp.json`.
+
 ### Claude Code plugin
 
 The repo also ships a Claude Code plugin that wires the MCP server and adds a skill

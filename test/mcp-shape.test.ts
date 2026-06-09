@@ -7,6 +7,7 @@ import {
   shapeReport,
   CAVEAT_NOT_FOUND,
   CAVEAT_CHECK_FAILED,
+  CAVEAT_DOCUMENT,
 } from "../src/mcp/shape.js";
 
 function cite(over: Partial<CitationCheckResult>): CitationCheckResult {
@@ -86,4 +87,30 @@ test("toIssues: partial_match notes carry the 'sloppy entry' reassurance", () =>
   ]);
   expect(issues[0]?.note).toContain("sloppy entry");
   expect(issues[0]?.note).toContain("Title differs"); // keeps the specific signal too
+});
+
+test("shapeVerify: suspicious also carries the hedge caveat", () => {
+  const out = shapeVerify(cite({ status: "suspicious" }));
+  expect(out.caveat).toBe(CAVEAT_NOT_FOUND);
+  expect(out.interpretation).toContain("matches poorly");
+});
+
+test("shapeVerify: a retracted work is flagged as RETRACTED in the interpretation", () => {
+  const out = shapeVerify(cite({ status: "verified", retracted: true }));
+  expect(out.retracted).toBe(true);
+  expect(out.interpretation).toContain("RETRACTED");
+});
+
+test("shapeReport: with an extraction block uses the document caveat and surfaces extraction info", () => {
+  const result: QuickCheckResult = {
+    citations: [cite({ status: "verified" }), cite({ status: "not_found", sourceRef: "Fake (2099)" })],
+    checkedAt: "t",
+  };
+  const out = shapeReport(result, {
+    extraction: { format: "docx", detected: 12, checked: 12, confidence: "high", truncated: false },
+  });
+  expect(out.caveat).toBe(CAVEAT_DOCUMENT);
+  expect(out.extraction?.detected).toBe(12);
+  expect(out.summary.total).toBe(12); // derived from extraction.detected
+  expect(out.issues[0]?.sourceRef).toBe("Fake (2099)");
 });

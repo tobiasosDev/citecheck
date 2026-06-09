@@ -1,11 +1,10 @@
 import { test, expect } from "bun:test";
-import { verifyReference } from "../src/index.js";
-import { MAX_REFS } from "../src/document.js";
+import { verifyReference, MAX_REFS } from "../src/index.js";
 
-test("verifyReference is exported as a function", () => {
+test("verifyReference is exported from the package entrypoint as a function", () => {
   expect(typeof verifyReference).toBe("function");
 });
 
-test("MAX_REFS is exported as 200", () => {
+test("MAX_REFS is exported from the package entrypoint as 200", () => {
   expect(MAX_REFS).toBe(200);
 });

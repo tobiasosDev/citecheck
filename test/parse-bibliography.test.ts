@@ -7,6 +7,12 @@ test("parses by .bib extension", () => {
   expect(items[0]?.title).toBe("Hello");
 });
 
+test("parses by .bibtex extension", () => {
+  const items = detectAndParse("refs.bibtex", "@article{a, title={HelloBibtex}, year={2021}}");
+  expect(items.length).toBe(1);
+  expect(items[0]?.title).toBe("HelloBibtex");
+});
+
 test("sniffs CSL-JSON content when extension is unknown", () => {
   const items = detectAndParse("-", '[{"id":"x","title":"T","type":"article-journal"}]');
   expect(items.length).toBe(1);

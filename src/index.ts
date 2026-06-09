@@ -11,6 +11,8 @@ export type { CslItemData, CslName, CslDate } from "./types.js";
 export type { DoajStatus } from "./doaj.js";
 export { checkDocument } from "./document.js";
 export type { CheckDocumentResult, DocumentExtraction } from "./document.js";
+// The cap on how many references a single document/bibliography check verifies (200).
+export { MAX_REFS } from "./document.js";
 // Pure extraction primitives. Also available mammoth-free via the
 // "citecheck/extract" subpath for browser/edge bundles.
 export { locateBibliography } from "./references/locate-section.js";
