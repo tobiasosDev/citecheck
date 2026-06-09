@@ -189,7 +189,7 @@ The repo also ships a Claude Code plugin that wires the MCP server and adds a sk
 teaching the agent to verify sources proactively — and to read the verdicts
 conservatively (a "not found" is a prompt to look, **not** proof a source is fake).
 
-```
+```text
 /plugin marketplace add tobiasosDev/citecheck
 /plugin install citecheck@citecheck
 ```

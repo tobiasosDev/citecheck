@@ -1,4 +1,4 @@
-import { readFile, stat } from "node:fs/promises";
+import { open } from "node:fs/promises";
 import { checkFreeTextRef } from "../references/match.js";
 import { quickCheck } from "../quick-check.js";
 import { detectAndParse } from "../parse-bibliography.js";
@@ -19,12 +19,28 @@ function syntheticLabel(format?: string): string {
   return "-"; // no hint → detectAndParse sniffs the content
 }
 
-// Read a file from disk, rejecting anything over the engine's input cap before
-// loading it into memory. Returns raw bytes; callers decode as needed.
+// Read a file from disk, enforcing the input cap on the bytes ACTUALLY read.
+// Streaming in chunks (rather than trusting a pre-stat size) means a concurrent
+// grow/replace can't slip a huge file past the guard, and an oversized file is
+// rejected without ever being fully loaded into memory. Returns raw bytes;
+// callers decode as needed.
 async function readWithLimit(path: string): Promise<Buffer> {
-  const info = await stat(path);
-  if (info.size > MAX_INPUT_BYTES) throw new Error(tooLargeMessage(info.size));
-  return readFile(path);
+  const handle = await open(path, "r");
+  try {
+    const chunks: Buffer[] = [];
+    let total = 0;
+    while (true) {
+      const buf = Buffer.allocUnsafe(64 * 1024);
+      const { bytesRead } = await handle.read(buf, 0, buf.length, null);
+      if (bytesRead === 0) break;
+      total += bytesRead;
+      if (total > MAX_INPUT_BYTES) throw new Error(tooLargeMessage(total));
+      chunks.push(buf.subarray(0, bytesRead));
+    }
+    return Buffer.concat(chunks, total);
+  } finally {
+    await handle.close();
+  }
 }
 
 /** Verify one free-text reference / DOI / title and shape it for an LLM. */
