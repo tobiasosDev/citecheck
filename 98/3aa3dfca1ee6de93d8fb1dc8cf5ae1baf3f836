@@ -1,0 +1,32 @@
+src/mcp.ts
+  s_d5a0511ead0bc5::t_092583332a8bed 1-16,29-43,46-62,64-77,80-83,28
+  s_d5a0511ead0bc5::t_3c7082fedaf4da 17-27
+  s_d5a0511ead0bc5::t_c058703441eb58 45
+  s_d5a0511ead0bc5::t_90746c164bac65 63
+  s_d5a0511ead0bc5::t_b4329dd7608803 79
+src/mcp/shape.ts
+  s_d5a0511ead0bc5::t_640b4d6f49a28f 1-104,112-117,119-167,110-111
+  s_d5a0511ead0bc5::t_e29fb22e02d45f 105-109,118
+src/mcp/tools.ts
+  s_d5a0511ead0bc5::t_220b3e9e2999ca 1-13,18,22-28,39-54,56-75,77-79,17,37-38
+  s_d5a0511ead0bc5::t_1db76e7b8c9e7d 29-30,31-36
+  s_d5a0511ead0bc5::t_4a43550aa9f185 14-16,19-21
+  s_d5a0511ead0bc5::t_464ebe819d6396 55
+  s_d5a0511ead0bc5::t_dccd3b8520a64e 76
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "983aa3dfca1ee6de93d8fb1dc8cf5ae1baf3f836",
+  "prompts": {},
+  "sessions": {
+    "s_d5a0511ead0bc5": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "8ae1ce46-f947-4ac8-8feb-1f78a9dc0877",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Tobias Lüscher <17859972+tobiasosDev@users.noreply.github.com>"
+    }
+  }
+}

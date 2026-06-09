@@ -1,0 +1,25 @@
+.claude-plugin/marketplace.json
+  s_d5a0511ead0bc5::t_5a65d5460089e2 1-12
+.mcp.json
+  s_d5a0511ead0bc5::t_0cce4493e6967e 1-9
+.claude-plugin/plugin.json
+  s_d5a0511ead0bc5::t_3eba7fe85db19f 1-9
+skills/verify-sources/SKILL.md
+  s_d5a0511ead0bc5::t_eb3e0676edbd2d 1-33
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "33ac6f8a898a83762b63785a4269aa8db7b2c8db",
+  "prompts": {},
+  "sessions": {
+    "s_d5a0511ead0bc5": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "8ae1ce46-f947-4ac8-8feb-1f78a9dc0877",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Tobias Lüscher <17859972+tobiasosDev@users.noreply.github.com>"
+    }
+  }
+}

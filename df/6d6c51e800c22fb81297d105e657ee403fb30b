@@ -1,0 +1,23 @@
+src/parse-bibliography.ts
+  s_d5a0511ead0bc5::t_5d7e267807caf6 1-25
+test/parse-bibliography.test.ts
+  s_d5a0511ead0bc5::t_b7464495ae958c 1-23
+src/cli.ts
+  s_d5a0511ead0bc5::t_4078f5ce39c9fc 4
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "df6d6c51e800c22fb81297d105e657ee403fb30b",
+  "prompts": {},
+  "sessions": {
+    "s_d5a0511ead0bc5": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "8ae1ce46-f947-4ac8-8feb-1f78a9dc0877",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Tobias Lüscher <17859972+tobiasosDev@users.noreply.github.com>"
+    }
+  }
+}
