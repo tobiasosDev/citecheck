@@ -16,3 +16,7 @@ export type { CheckDocumentResult, DocumentExtraction } from "./document.js";
 export { locateBibliography } from "./references/locate-section.js";
 export type { LocatedSection } from "./references/locate-section.js";
 export { segmentReferences } from "./references/segment.js";
+// Single free-text reference check (one citation string / DOI / title).
+// Re-export of the internal free-text matcher under a public name — also used
+// by the MCP server's verify_reference tool and the Acurio web app.
+export { checkFreeTextRef as verifyReference } from "./references/match.js";
