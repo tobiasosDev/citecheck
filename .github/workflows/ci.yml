@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Tests are written with `bun:test`, so bun is required to run them.
+      - uses: oven-sh/setup-bun@v2
+
+      # The CLI is published as plain JS and runs under Node (engines: >=18);
+      # the smoke step exercises it under Node to honor that contract.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install (frozen lockfile)
+        run: bun install --frozen-lockfile
+
+      - name: Build (tsc)
+        run: bun run build
+
+      - name: Test (offline — all network calls are mocked)
+        run: bun test
+
+      - name: Smoke (run compiled CLI under Node)
+        run: bun run smoke

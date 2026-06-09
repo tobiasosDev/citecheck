@@ -1,4 +1,24 @@
-export const VERSION = "1.1.1";
+import { readFileSync } from "node:fs";
+
+/**
+ * Single source of truth for the version. Read from `package.json` (always
+ * shipped in the npm tarball, one level up from `dist/`) so the CLI
+ * `--version`, the `--help` banner, and the API User-Agent can never drift
+ * from the published package version. Falls back to "0.0.0" if it can't be
+ * read (e.g. an unusual bundling setup) rather than crashing.
+ */
+function readVersion(): string {
+  try {
+    const pkg = JSON.parse(
+      readFileSync(new URL("../package.json", import.meta.url), "utf8"),
+    ) as { version?: string };
+    return pkg.version ?? "0.0.0";
+  } catch {
+    return "0.0.0";
+  }
+}
+
+export const VERSION = readVersion();
 const REPO = "https://github.com/tobiasosDev/citecheck";
 
 /**
