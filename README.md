@@ -1,6 +1,7 @@
 # citecheck
 
 [![npm](https://img.shields.io/npm/v/citecheck)](https://www.npmjs.com/package/citecheck)
+[![CI](https://github.com/tobiasosDev/citecheck/actions/workflows/ci.yml/badge.svg)](https://github.com/tobiasosDev/citecheck/actions/workflows/ci.yml)
 [![license: MIT](https://img.shields.io/badge/license-MIT-blue)](./LICENSE)
 
 **Sanity-check the references in your bibliography before you submit.** Point
@@ -143,9 +144,10 @@ are simply not in DOAJ).
 citecheck is also a small library:
 
 ```ts
+import { readFile } from "node:fs/promises";
 import { quickCheck, parseBib } from "citecheck";
 
-const items = parseBib(await Bun.file("references.bib").text());
+const items = parseBib(await readFile("references.bib", "utf8"));
 const { citations } = await quickCheck(items);
 
 for (const c of citations) {
@@ -183,6 +185,13 @@ Built on the open scholarly infrastructure that makes this possible:
 [Crossref](https://www.crossref.org/), [OpenAlex](https://openalex.org/), and
 the [Directory of Open Access Journals](https://doaj.org/). Retraction data is
 surfaced via Crossref (sourced from [Retraction Watch](https://retractionwatch.com/)).
+
+## Contributing
+
+Bug reports, real-world bibliographies that segment badly, and improvements to
+the matching heuristics are all welcome. See [CONTRIBUTING.md](./CONTRIBUTING.md)
+for dev setup and the testing convention, and [CHANGELOG.md](./CHANGELOG.md) for
+release notes.
 
 ## License
 
