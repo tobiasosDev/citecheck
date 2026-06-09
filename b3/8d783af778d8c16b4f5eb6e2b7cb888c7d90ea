@@ -1,0 +1,21 @@
+docs/superpowers/plans/2026-06-09-mcp-server-and-plugin.md
+  s_d5a0511ead0bc5::t_05201eb3792b39 557,559-560,562-584,586-587,589-595,597,605-612,621,625-634,642-643
+  s_d5a0511ead0bc5::t_081bec31ddbdf7 600
+  s_d5a0511ead0bc5::t_076e15a2486dd1 1-556,558,561,585,588,596,598-599,601-604,613-620,622-624,635-641,644-1123
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "b38d783af778d8c16b4f5eb6e2b7cb888c7d90ea",
+  "prompts": {},
+  "sessions": {
+    "s_d5a0511ead0bc5": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "8ae1ce46-f947-4ac8-8feb-1f78a9dc0877",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Tobias Lüscher <17859972+tobiasosDev@users.noreply.github.com>"
+    }
+  }
+}
