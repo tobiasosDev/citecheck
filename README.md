@@ -160,6 +160,39 @@ for (const c of citations) {
 Exports: `quickCheck`, `parseBib`, `parseRis`, `parseCslJson`, and the
 `CslItemData` / `QuickCheckResult` / `CitationCheckResult` types.
 
+## Use it from an AI agent (MCP + Claude Code plugin)
+
+citecheck ships an MCP server so an AI agent can verify sources itself — including
+references it just wrote. It exposes three tools:
+
+| Tool | Input | What it does |
+| --- | --- | --- |
+| `verify_reference` | a reference string, DOI, or title | check ONE citation |
+| `check_bibliography` | a `.bib`/`.ris`/CSL-JSON `path` or inline `content` | check a whole export (≤200 refs) |
+| `check_document` | a `.docx`/`.txt`/`.md` `path` | extract the bibliography and check it |
+
+Run the server over stdio:
+
+```sh
+npx -y --package=citecheck citecheck-mcp
+```
+
+(The server bin lives in the `citecheck` package, so `--package=citecheck` is required.)
+
+### Claude Code plugin
+
+The repo also ships a Claude Code plugin that wires the MCP server and adds a skill
+teaching the agent to verify sources proactively — and to read the verdicts
+conservatively (a "not found" is a prompt to look, **not** proof a source is fake).
+
+```
+/plugin marketplace add tobiasosDev/citecheck
+/plugin install citecheck@citecheck
+```
+
+Same privacy guarantee as the CLI: only each reference string is sent to
+Crossref/OpenAlex/DOAJ — your document is never uploaded.
+
 ## What citecheck does *not* do
 
 citecheck checks that your sources are **real, current, and from sound venues**.
