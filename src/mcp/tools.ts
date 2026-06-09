@@ -28,6 +28,14 @@ function syntheticLabel(format?: string): string {
   return "-"; // no hint → detectAndParse sniffs the content
 }
 
+// Read a file from disk, rejecting anything over the engine's input cap before
+// loading it into memory. Returns raw bytes; callers decode as needed.
+async function readWithLimit(path: string): Promise<Buffer> {
+  const info = await stat(path);
+  if (info.size > MAX_INPUT_BYTES) throw new Error(tooLargeMessage(info.size));
+  return readFile(path);
+}
+
 export async function runVerifyReference(input: { ref: string; mailto?: string }): Promise<VerifyShape> {
   applyMailto(input.mailto);
   return shapeVerify(await checkFreeTextRef(input.ref));
@@ -44,9 +52,7 @@ export async function runCheckBibliography(
   let text: string;
   let label: string;
   if (input.path) {
-    const info = await stat(input.path);
-    if (info.size > MAX_INPUT_BYTES) throw new Error(tooLargeMessage(info.size));
-    text = await readFile(input.path, "utf8");
+    text = (await readWithLimit(input.path)).toString("utf8");
     label = input.path;
   } else {
     text = input.content as string;
@@ -67,9 +73,7 @@ export async function runCheckBibliography(
 
 export async function runCheckDocument(input: { path: string; mailto?: string }): Promise<ReportShape> {
   applyMailto(input.mailto);
-  const info = await stat(input.path);
-  if (info.size > MAX_INPUT_BYTES) throw new Error(tooLargeMessage(info.size));
-  const bytes = await readFile(input.path);
+  const bytes = await readWithLimit(input.path);
   const { extraction, result } = await checkDocument({ bytes, filename: input.path });
   return shapeReport(result, { extraction: mapExtraction(extraction) });
 }

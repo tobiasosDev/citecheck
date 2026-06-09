@@ -102,17 +102,20 @@ export function isIssue(c: CitationCheckResult): boolean {
   return c.status === "not_found" || c.status === "suspicious" || c.status === "partial_match";
 }
 
+function issueNote(c: CitationCheckResult): string {
+  if (c.retracted) return "RETRACTED";
+  const base = c.warnings[0] ?? interpret(c.status, false);
+  if (c.status === "partial_match") return base + " — often just a sloppy entry.";
+  return base;
+}
+
 export function toIssues(cits: CitationCheckResult[]): Issue[] {
   return cits.filter(isIssue).map((c) => {
     const issue: Issue = {
       title: c.title,
       status: c.status,
       retracted: c.retracted,
-      note: c.retracted
-        ? "RETRACTED"
-        : c.status === "partial_match"
-          ? (c.warnings[0] ?? interpret(c.status, false)) + " — often just a sloppy entry."
-          : (c.warnings[0] ?? interpret(c.status, false)),
+      note: issueNote(c),
     };
     if (c.key) issue.key = c.key;
     if (c.sourceRef) issue.sourceRef = c.sourceRef;

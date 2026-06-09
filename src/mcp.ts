@@ -14,6 +14,18 @@ function errorResult(err: unknown) {
   return { content: [{ type: "text" as const, text: msg }], isError: true };
 }
 
+// Wrap a tool runner so its result is JSON-serialized and any thrown error is
+// surfaced as an MCP error result instead of crashing the transport.
+function handler<Args>(run: (args: Args) => Promise<unknown>) {
+  return async (args: Args) => {
+    try {
+      return jsonResult(await run(args));
+    } catch (err) {
+      return errorResult(err);
+    }
+  };
+}
+
 const server = new McpServer({ name: "citecheck", version: VERSION });
 
 server.registerTool(
@@ -30,13 +42,7 @@ server.registerTool(
       mailto: z.string().optional().describe("Email for the Crossref/OpenAlex polite pool (faster rate limits)."),
     },
   },
-  async ({ ref, mailto }) => {
-    try {
-      return jsonResult(await runVerifyReference({ ref, mailto }));
-    } catch (err) {
-      return errorResult(err);
-    }
-  },
+  handler(runVerifyReference),
 );
 
 server.registerTool(
@@ -54,13 +60,7 @@ server.registerTool(
       mailto: z.string().optional().describe("Email for the Crossref/OpenAlex polite pool."),
     },
   },
-  async ({ path, content, format, mailto }) => {
-    try {
-      return jsonResult(await runCheckBibliography({ path, content, format, mailto }));
-    } catch (err) {
-      return errorResult(err);
-    }
-  },
+  handler(runCheckBibliography),
 );
 
 server.registerTool(
@@ -76,13 +76,7 @@ server.registerTool(
       mailto: z.string().optional().describe("Email for the Crossref/OpenAlex polite pool."),
     },
   },
-  async ({ path, mailto }) => {
-    try {
-      return jsonResult(await runCheckDocument({ path, mailto }));
-    } catch (err) {
-      return errorResult(err);
-    }
-  },
+  handler(runCheckDocument),
 );
 
 const transport = new StdioServerTransport();
