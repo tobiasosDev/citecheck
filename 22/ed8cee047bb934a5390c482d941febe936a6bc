@@ -1,0 +1,29 @@
+README.md
+  s_96980f34974452::t_1186804367a502 147,150
+  s_96980f34974452::t_be385cfb5af507 189-195
+  s_96980f34974452::t_de396e92204f75 4
+CONTRIBUTING.md
+  s_96980f34974452::t_c98a041207bfec 1-89
+.github/workflows/ci.yml
+  s_96980f34974452::t_b277af84bceb2f 1-36
+src/http.ts
+  s_96980f34974452::t_25b4904660ef0a 1-21
+CHANGELOG.md
+  s_96980f34974452::t_6e3b2717bd010d 1-55
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "22ed8cee047bb934a5390c482d941febe936a6bc",
+  "prompts": {},
+  "sessions": {
+    "s_96980f34974452": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "28cc946c-16fb-4032-bf6e-61f544faea92",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Tobias Lüscher <17859972+tobiasosDev@users.noreply.github.com>"
+    }
+  }
+}
