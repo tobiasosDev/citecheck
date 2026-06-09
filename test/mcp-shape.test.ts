@@ -79,3 +79,11 @@ test("shapeReport: collapses verified to a count, uses detectedTotal for total",
   expect(out.issues.length).toBe(1);
   expect(out.caveat).toBe(CAVEAT_NOT_FOUND);
 });
+
+test("toIssues: partial_match notes carry the 'sloppy entry' reassurance", () => {
+  const issues = toIssues([
+    cite({ key: "p", status: "partial_match", warnings: ["Title differs from Crossref record."] }),
+  ]);
+  expect(issues[0]?.note).toContain("sloppy entry");
+  expect(issues[0]?.note).toContain("Title differs"); // keeps the specific signal too
+});

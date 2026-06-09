@@ -11,8 +11,14 @@ import type { VerifyShape, ReportShape } from "./shape.js";
  * (see src/http.ts). The CLI sets it the same way (cli.ts). A per-call mailto
  * overrides the env for this process.
  */
+// The polite-pool address the server was LAUNCHED with (env), captured once so a
+// per-call `mailto` never leaks into a later call that omits it.
+const ENV_MAILTO = process.env.CITECHECK_MAILTO;
+
 function applyMailto(mailto?: string): void {
-  if (mailto) process.env.CITECHECK_MAILTO = mailto;
+  const resolved = mailto ?? ENV_MAILTO;
+  if (resolved) process.env.CITECHECK_MAILTO = resolved;
+  else delete process.env.CITECHECK_MAILTO;
 }
 
 function syntheticLabel(format?: string): string {
