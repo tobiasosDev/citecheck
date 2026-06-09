@@ -1,0 +1,22 @@
+README.md
+  s_d5a0511ead0bc5::t_923b226b6f6e9b 192
+src/mcp/tools.ts
+  s_d5a0511ead0bc5::t_f940de21d3202e 1
+  s_d5a0511ead0bc5::t_88ac2adb0cae15 22-26,28-43
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "3925c32a20f7db42f061686a19ee51e98934215e",
+  "prompts": {},
+  "sessions": {
+    "s_d5a0511ead0bc5": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "8ae1ce46-f947-4ac8-8feb-1f78a9dc0877",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Tobias Lüscher <17859972+tobiasosDev@users.noreply.github.com>"
+    }
+  }
+}
